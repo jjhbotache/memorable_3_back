@@ -1,5 +1,5 @@
-from .classes.user import User
-from .classes.databaseConnection import DatabaseConnection
+from classes.user import User
+from classes.databaseConnection import DatabaseConnection
 
 def get_user_by_google_sub(google_sub:str):
     connection = DatabaseConnection()

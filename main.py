@@ -1,8 +1,6 @@
 from fastapi import FastAPI,responses
-import back.db_managment as db # type: ignore
-from .classes.user import User
-from .classes.data import Data
-from .classes.create_data import CreateData
+import db_managment as db   
+from classes.user import User
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -20,7 +18,6 @@ def read_root():
  
 @app.post("/user-login-signup")
 def get_set_user(user:User):
-    print(user)
     user_found = db.get_user_by_google_sub(user.google_sub)
     # if the user exists, return the user, else create a new user
     if user_found:
