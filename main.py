@@ -1,7 +1,8 @@
 from fastapi import FastAPI,responses
-import db_managment as db   
+from db_managment import db_managment as db
 from classes.user import User
 from fastapi.middleware.cors import CORSMiddleware
+import os
 
 app = FastAPI()
 app.add_middleware(
@@ -25,3 +26,15 @@ def get_set_user(user:User):
     else:
         db.set_new_user(user)
         return responses.JSONResponse(content={"status":"ok"})
+    
+@app.get("/image/{name}")
+def serve_image(name:str):
+    path_to_img = os.path.join("designs","designs_imgs",name)
+    return responses.FileResponse(path=path_to_img,media_type="image/png")
+
+# get imgs urls
+@app.get("/imgs")
+def get_imgs():
+    imgs = db.get_img_urls()
+    print(imgs)
+    return responses.JSONResponse(content=imgs)
