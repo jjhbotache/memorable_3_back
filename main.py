@@ -1,8 +1,10 @@
 from fastapi import FastAPI,responses
 from db_managment import db_managment as db
 from classes.user import User
+from classes.SendEmailClass import SendEmailClass
 from fastapi.middleware.cors import CORSMiddleware
 import os
+from helpers.send_mail import send_email as send_mail_function
 
 app = FastAPI()
 app.add_middleware(
@@ -38,3 +40,13 @@ def get_imgs():
     imgs = db.get_img_urls()
     print(imgs)
     return responses.JSONResponse(content=imgs)
+
+@app.post("/contact-us")
+def send_email(data:SendEmailClass):
+    data.recipent = "memorableibaguecolombia@gmail.com"
+    send_mail_function(
+        recipent=data.recipent,
+        subject=data.subject,
+        message=data.message
+    )
+    return responses.JSONResponse(content={"status":"ok"})
