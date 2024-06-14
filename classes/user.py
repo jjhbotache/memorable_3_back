@@ -6,4 +6,4 @@ class User(BaseModel):
     name: str
     email: str
     phone: Optional[str] = None
-    image_url: Optional[str] = None
+    img_url: Optional[str] = None

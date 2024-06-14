@@ -30,22 +30,21 @@ class DatabaseConnection:
             CREATE TABLE IF NOT EXISTS designs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
-                image_url TEXT,
+                img_url TEXT,
                 ai_url TEXT
             );
         """)
         self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS tags (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                vector_url TEXT
+                name TEXT NOT NULL
             );
         """)
         self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS carts (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 id_user TEXT,
-                FOREIGN KEY (id_user) REFERENCES users(google_sub)
+                FOREIGN KEY (id_user) REFERENCES users(google_sub) ON DELETE CASCADE
             );
         """)
         self.cursor.execute("""
@@ -53,15 +52,15 @@ class DatabaseConnection:
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 id_cart INTEGER,
                 id_designs INTEGER,
-                FOREIGN KEY (id_cart) REFERENCES carts(id),
-                FOREIGN KEY (id_designs) REFERENCES designs(id)
+                FOREIGN KEY (id_cart) REFERENCES carts(id) ON DELETE CASCADE,
+                FOREIGN KEY (id_designs) REFERENCES designs(id) ON DELETE CASCADE
             );
         """)
         self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS favorite_lists (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 id_user TEXT,
-                FOREIGN KEY (id_user) REFERENCES users(google_sub)
+                FOREIGN KEY (id_user) REFERENCES users(google_sub) ON DELETE CASCADE
             );
         """)
         self.cursor.execute("""
@@ -69,17 +68,17 @@ class DatabaseConnection:
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 id_favorite_list INTEGER,
                 id_designs INTEGER,
-                FOREIGN KEY (id_favorite_list) REFERENCES favorite_lists(id),
-                FOREIGN KEY (id_designs) REFERENCES designs(id)
+                FOREIGN KEY (id_favorite_list) REFERENCES favorite_lists(id) ON DELETE CASCADE,
+                FOREIGN KEY (id_designs) REFERENCES designs(id) ON DELETE CASCADE
             );
         """)
         self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS tag_design (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 id_tag INTEGER,
-                id_designs INTEGER,
-                FOREIGN KEY (id_tag) REFERENCES tags(id),
-                FOREIGN KEY (id_designs) REFERENCES designs(id)
+                id_design INTEGER,
+                FOREIGN KEY (id_tag) REFERENCES tags(id) ON DELETE CASCADE,
+                FOREIGN KEY (id_design) REFERENCES designs(id) ON DELETE CASCADE
             );
         """)
         
