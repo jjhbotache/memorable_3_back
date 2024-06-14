@@ -27,11 +27,8 @@ def set_new_user(user:User):
 def get_img_urls():
     db = DatabaseConnection()
     cursor = db.cursor
-    cursor.execute( "SELECT * FROM designs" )
+    cursor.execute( "SELECT img_url FROM designs" )
     img_urls = cursor.fetchall()
-    # organize the data in dicts
-    columns = [column[0] for column in cursor.description]
-    img_urls = [dict(zip(columns, row)) for row in img_urls]
     db.connection.close()
     return img_urls
 
@@ -51,7 +48,7 @@ def set_tag(tag: Tag):
     tag.id_tag = cursor.lastrowid
     return tag
 
-def get_tags():
+def get_tags_from_db():
     db = DatabaseConnection()
     cursor = db.cursor
     cursor.execute("SELECT * FROM tags")
@@ -77,12 +74,28 @@ def delete_tag(tag: Tag):
     db = DatabaseConnection()
     cursor = db.cursor
     cursor.execute(
-        "DELETE FROM tags WHERE id_tag = ?",
+        "DELETE FROM tags WHERE id = ?",
         (tag.id_tag,)
     )
     db.connection.commit()
     db.connection.close()
     
+def get_tags_by_design_id(id_design:int):
+    db = DatabaseConnection()
+    cursor = db.cursor
+    cursor.execute(
+        "SELECT tags.id, tags.name FROM tag_design JOIN tags ON tag_design.id_tag = tags.id WHERE tag_design.id_design = ?",
+        (id_design,)
+    )
+    tags = cursor.fetchall()
+    # format the data to a list of dicts
+    columns = [column[0] for column in cursor.description]
+    tags = [dict(zip(columns, row)) for row in tags]
+    
+    
+    
+    db.connection.close()
+    return tags
     
 # designs
 def set_design(design: Design, list_of_tags_ids: list[int]):
@@ -112,9 +125,11 @@ def get_designs():
     designs = cursor.fetchall()
     columns = [column[0] for column in cursor.description]
     designs = [dict(zip(columns, row)) for row in designs]
+    for design in designs:
+        design["tags"] = get_tags_by_design_id(design["id"])
+        
     db.connection.close()
     
-    # return designs
     return designs
 
 def get_design_by_id(id_design:int):

@@ -23,13 +23,9 @@ def upload_ai(file_path:str):
     return response["url"]
 
 def delete_file_on_cloudinary(public_url):
-    # Extraer el ID público del archivo de la URL
-    # Asumiendo que la URL sigue el formato estándar de Cloudinary
-    partes_url = public_url.split('/')
-    public_id = partes_url[-1].split('.')[0]  # Elimina la extensión del archivo
-
-    # Eliminar el archivo usando Cloudinary
-    result = cloudinary.uploader.destroy(public_id) 
+    # "http://res.cloudinary.com/dgm8uzbpd/image/upload/v1718382248/designs/xugpez0dz1sxksdh30ha.png"
+    public_id = "/".join(public_url.split('/')[-2:]).split('.')[0]
+    result = cloudinary.api.delete_resources([public_id])
     return result
     
 

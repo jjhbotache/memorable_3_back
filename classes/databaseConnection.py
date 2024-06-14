@@ -14,6 +14,7 @@ class DatabaseConnection:
         return cls._instance
     
     def __init__(self):
+        # if the file aleady exists, return
         self.connection = sqlite3.connect(DatabaseConnection.database_name)
         self.cursor = self.connection.cursor()
         # create the tables

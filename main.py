@@ -58,12 +58,12 @@ def serve_image(name:str):
     path_to_img = os.path.join("designs","designs_imgs",name)
     return responses.FileResponse(path=path_to_img,media_type="image/png")
 
-# get imgs urls
 @app.get("/imgs")
 def get_imgs():
-    imgs = db.get_img_urls()
-    print(imgs)
-    return responses.JSONResponse(content=imgs)
+    # get all the imgs from the designs
+    get_imgs = db.get_img_urls()
+    return responses.JSONResponse(content=get_imgs)
+
 
 @app.post("/contact-us")
 def send_email(data:SendEmailClass):
@@ -80,7 +80,7 @@ def send_email(data:SendEmailClass):
 @app.get("/tags")
 def get_tags():
     print("get tags")
-    tags = db.get_tags()
+    tags = db.get_tags_from_db()
     return responses.JSONResponse(content=tags)
 
 @app.post("/tag/create")
