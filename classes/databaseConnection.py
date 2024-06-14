@@ -23,7 +23,7 @@ class DatabaseConnection:
                 name TEXT NOT NULL,
                 email TEXT NOT NULL,
                 phone TEXT,
-                image_url TEXT
+                img_url TEXT
             );
         """)
         self.cursor.execute("""
