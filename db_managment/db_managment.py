@@ -154,6 +154,31 @@ def delete_design(id_design:int):
     db.connection.commit()
     db.connection.close()
     
+def update_design(design:Design, list_of_tags_ids:list[int]):
+    db = DatabaseConnection()
+    cursor = db.cursor
+    cursor.execute(
+        "UPDATE designs SET name = ?, img_url = ?, ai_url = ? WHERE id = ?",
+        (design.name, design.img_url, design.ai_url, design.id_design)
+    )
+    db.connection.commit()
+    
+    # delete the old tags
+    cursor.execute(
+        "DELETE FROM tag_design WHERE id_design = ?",
+        (design.id_design,)
+    )
+    db.connection.commit()
+    
+    # set the new tags
+    for tag_id in list_of_tags_ids:
+        cursor.execute(
+            "INSERT INTO tag_design (id_tag,id_design) VALUES (?, ?)",
+            (tag_id, design.id_design)
+        )
+    db.connection.commit()
+    db.connection.close()
+    
 #users
 def get_users():
     db = DatabaseConnection()

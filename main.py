@@ -167,14 +167,53 @@ def create_design(
 @app.delete("/design/delete/{id_design}")
 @admin_only
 def delete_design(id_design:int,request:Request):
-    # delete each file on cloudinary
-    design = db.get_design_by_id(id_design)
-    print("design: ",design)
-    delete_file_on_cloudinary(design["img_url"])
-    delete_file_on_cloudinary(design["ai_url"])  
-    
     db.delete_design(id_design)
     return responses.JSONResponse(content={"status":"ok"})
+    
+    
+@app.put("/design/update")
+@admin_only
+def update_design(
+    request:Request,
+    id_design:int = Form(...),
+    name:str = Form(None),
+    img:UploadFile = File(None),
+    ai:UploadFile = File(None),
+    tags_in_string:str = Form(None), # "2,4,6,2,1,3"
+    ):
+    
+    print("update design")
+    # just print the data
+    print("id_design: ",id_design)
+    print("name: ",name)
+    print("img: ",img)
+    print("ai: ",ai)
+    print("tags_in_string: ",tags_in_string)
+    
+    # return responses.JSONResponse(content={"status":"ok"})
+    # first, parse data from the form
+    # if there is a new img, upload it to cloudinary and delete the old one
+    # if there is a new ai, upload it to cloudinary and delete the old one
+    old_design = db.get_design_by_id(id_design)
+    if img or ai:
+        if img:
+            img_url = upload_desing(img.file)
+            delete_file_on_cloudinary(old_design["img_url"])
+        if ai:
+            ai_url = upload_ai(ai.file)
+            delete_file_on_cloudinary(old_design["ai_url"])
+    
+    id_list_of_tags = [int(tag_id) for tag_id in tags_in_string.split(",")]
+    db.update_design(
+        design=Design(
+            id_design=id_design,
+            name=name if name else old_design["name"],
+            img_url=img_url if img else old_design["img_url"],
+            ai_url=ai_url if ai else old_design["ai_url"]
+        ),
+        list_of_tags_ids=id_list_of_tags if tags_in_string else old_design["tags"]
+    )
+    pass
 
 
 # users crud
