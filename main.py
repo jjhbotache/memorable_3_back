@@ -53,10 +53,6 @@ def get_set_user(user:User):
         db.set_new_user(user)
         return responses.JSONResponse(content={"status":"ok"})
     
-@app.get("/image/{name}")
-def serve_image(name:str):
-    path_to_img = os.path.join("designs","designs_imgs",name)
-    return responses.FileResponse(path=path_to_img,media_type="image/png")
 
 @app.get("/imgs")
 def get_imgs():
