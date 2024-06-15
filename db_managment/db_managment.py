@@ -15,14 +15,7 @@ def get_user_by_google_sub(google_sub:str):
     connection.connection.close()
     return user
 
-def set_new_user(user:User):
-    connection = DatabaseConnection()
-    connection.cursor.execute(
-        "INSERT INTO users (google_sub, name, email, phone, img_url) VALUES (?, ?, ?, ?, ?)",
-        (user.google_sub, user.name, user.email, user.phone, user.img_url)
-    )
-    connection.connection.commit()
-    connection.connection.close()
+
     
 def get_img_urls():
     db = DatabaseConnection()
@@ -60,11 +53,11 @@ def get_tags_from_db():
     # return tags
     return tags
 
-def update_tag(tag: Tag):
+def update_tag_in_db(tag: Tag):
     db = DatabaseConnection()
     cursor = db.cursor
     cursor.execute(
-        "UPDATE tags SET name = ? WHERE id_tag = ?",
+        "UPDATE tags SET name = ? WHERE id = ?",
         (tag.name, tag.id_tag)
     )
     db.connection.commit()
@@ -84,7 +77,12 @@ def get_tags_by_design_id(id_design:int):
     db = DatabaseConnection()
     cursor = db.cursor
     cursor.execute(
-        "SELECT tags.id, tags.name FROM tag_design JOIN tags ON tag_design.id_tag = tags.id WHERE tag_design.id_design = ?",
+        """
+        SELECT tags.id, tags.name
+        FROM tag_design 
+        JOIN tags ON tag_design.id_tag = tags.id
+        WHERE tag_design.id_design = ?
+        """,
         (id_design,)
     )
     tags = cursor.fetchall()
@@ -155,3 +153,43 @@ def delete_design(id_design:int):
     )
     db.connection.commit()
     db.connection.close()
+    
+#users
+def get_users():
+    db = DatabaseConnection()
+    cursor = db.cursor
+    cursor.execute("SELECT * FROM users")
+    users = cursor.fetchall()
+    columns = [column[0] for column in cursor.description]
+    users = [dict(zip(columns, row)) for row in users]
+    db.connection.close()
+    return users
+
+def delete_user(google_sub:str):
+    db = DatabaseConnection()
+    cursor = db.cursor
+    cursor.execute(
+        "DELETE FROM users WHERE google_sub = ?",
+        (google_sub,)
+    )
+    db.connection.commit()
+    db.connection.close()
+    
+def update_user(user:User):
+    db = DatabaseConnection()
+    cursor = db.cursor
+    cursor.execute(
+        "UPDATE users SET name = ?, email = ?, phone = ?, img_url = ? WHERE google_sub = ?",
+        (user.name, user.email, user.phone, user.img_url, user.google_sub)
+    )
+    db.connection.commit()
+    db.connection.close()
+    
+def set_new_user(user:User):
+    connection = DatabaseConnection()
+    connection.cursor.execute(
+        "INSERT INTO users (google_sub, name, email, phone, img_url) VALUES (?, ?, ?, ?, ?)",
+        (user.google_sub, user.name, user.email, user.phone, user.img_url)
+    )
+    connection.connection.commit()
+    connection.connection.close()

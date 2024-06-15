@@ -93,7 +93,7 @@ def create_tag(tag:Tag,request:Request):
 @app.put("/tag/update")
 @admin_only
 def update_tag(tag:Tag,request:Request):
-    db.update_tag(tag)
+    db.update_tag_in_db(tag)
     return responses.JSONResponse(content={"status":"ok"})
 
 @app.delete("/tag/delete")
@@ -174,6 +174,26 @@ def delete_design(id_design:int,request:Request):
     delete_file_on_cloudinary(design["ai_url"])  
     
     db.delete_design(id_design)
+    return responses.JSONResponse(content={"status":"ok"})
+
+
+# users crud
+@app.get("/users")
+@admin_only
+def get_users(request:Request):
+    users = db.get_users()
+    return responses.JSONResponse(content=users)
+
+@app.delete("/user/delete/{google_sub}")
+@admin_only
+def delete_user(google_sub:str,request:Request):
+    db.delete_user(google_sub)
+    return responses.JSONResponse(content={"status":"ok"})
+
+@app.put("/user/update")
+@admin_only
+def update_user(user:User,request:Request):
+    db.update_user(user)
     return responses.JSONResponse(content={"status":"ok"})
 
 # route to verify the user is an admin or not

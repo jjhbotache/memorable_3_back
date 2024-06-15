@@ -17,6 +17,14 @@ class DatabaseConnection:
         # if the file aleady exists, return
         self.connection = sqlite3.connect(DatabaseConnection.database_name)
         self.cursor = self.connection.cursor()
+        
+        # if the db is empty, create the tables
+        self.cursor.execute("SELECT * FROM sqlite_master WHERE type='table';")
+        tables = self.cursor.fetchall()
+        if len(tables) == 0:
+            self.create_tables()
+        
+    def create_tables(self):
         # create the tables
         self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS users (
