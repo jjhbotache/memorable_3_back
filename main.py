@@ -60,7 +60,6 @@ def get_imgs():
     get_imgs = db.get_img_urls()
     return responses.JSONResponse(content=get_imgs)
 
-
 @app.post("/contact-us")
 def send_email(data:SendEmailClass):
     data.recipent = "memorableibaguecolombia@gmail.com"
@@ -105,6 +104,14 @@ def get_designs(request:Request):
     designs = db.get_designs()
     return responses.JSONResponse(content=designs)
 
+@app.get("/designs/public")
+def get_designs_public():
+    designs = db.get_designs()
+    # for each design, remove the ai_url
+    for design in designs:
+        design["ai_url"] = ""
+        
+    return responses.JSONResponse(content=designs)
 @app.post("/design/create")
 @admin_only
 def create_design(
