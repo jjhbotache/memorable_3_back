@@ -1,9 +1,10 @@
 from fastapi import FastAPI, File, Form,responses,Request,UploadFile
 from classes.design import Design
 from classes.tag import Tag
-from db_managment import db_managment as db
 from classes.user import User
 from classes.SendEmailClass import SendEmailClass
+from classes.databaseConnection import DatabaseConnection 
+from db_managment import db_managment as db
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from helpers.send_mail import send_email as send_mail_function
@@ -12,6 +13,7 @@ from helpers.compressor import *
 from constants import list_of_google_sub_admins
 from functools import wraps
 from cloudinary_manager.cloudinary_manager import delete_file_on_cloudinary, upload_ai,upload_desing 
+from fastapi.responses import FileResponse
 
 app = FastAPI()
 app.add_middleware(
@@ -243,3 +245,27 @@ def update_user(user:User,request:Request):
 @admin_only
 def verify_admin(request:Request):
     return responses.JSONResponse(content={"status":"ok"})
+
+
+@app.get("/db/export")
+@admin_only
+def export_db(request: Request):
+    # Export the database and save it to a file
+    db.export_db(
+        source_path=DatabaseConnection.database_name,
+        destination_path= (path_to_exported_db_file:=os.path.join(os.getcwd(),"temp", "exported_db.db"))
+    )
+    
+    
+    # Return the exported database file as a response
+    return FileResponse(path_to_exported_db_file, filename="database.db")
+
+@app.post("/db/import")
+@admin_only
+def import_db(request: Request, db_file: UploadFile = File(...)):
+    # overwrite the current database with the uploaded file
+    with open(DatabaseConnection.database_name, "wb") as f:
+        f.write(db_file.file.read())    
+    
+    return responses.JSONResponse(content={"status":"ok"})
+    

@@ -2,6 +2,7 @@ from classes.user import User
 from classes.databaseConnection import DatabaseConnection
 from classes.design import Design
 from classes.tag import Tag
+import shutil
 
 
 def get_user_by_google_sub(google_sub:str):
@@ -218,3 +219,21 @@ def set_new_user(user:User):
     )
     connection.connection.commit()
     connection.connection.close()
+    
+def import_db(source_path: str, destination_path: str):
+    try:
+        shutil.copyfile(source_path, destination_path)
+        print("Database imported successfully.")
+    except FileNotFoundError:
+        print("Source file not found.")
+    except Exception as e:
+        print(f"An error occurred during database import: {str(e)}")
+
+def export_db(source_path: str, destination_path: str):
+    try:
+        shutil.copyfile(source_path, destination_path)
+        print("Database exported successfully.")
+    except FileNotFoundError:
+        print("Destination directory not found.")
+    except Exception as e:
+        print(f"An error occurred during database export: {str(e)}")
