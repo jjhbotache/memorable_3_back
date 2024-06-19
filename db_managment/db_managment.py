@@ -141,6 +141,8 @@ def get_design_by_id(id_design:int):
     design = cursor.fetchone()
     # return a dict with the data
     design_dict = dict(zip([column[0] for column in cursor.description], design))
+    # get also the tags
+    design_dict["tags"] = get_tags_by_design_id(id_design)
     
     db.connection.close()
     return design_dict
@@ -172,11 +174,20 @@ def update_design(design:Design, list_of_tags_ids:list[int]):
     db.connection.commit()
     
     # set the new tags
-    for tag_id in list_of_tags_ids:
+    if list_of_tags_ids == None or list_of_tags_ids == []:
+        # clear the tags
         cursor.execute(
-            "INSERT INTO tag_design (id_tag,id_design) VALUES (?, ?)",
-            (tag_id, design.id_design)
+            "DELETE FROM tag_design WHERE id_design = ?",
+            (design.id_design,)
         )
+    else:
+        for tag_id in list_of_tags_ids:
+            cursor.execute(
+                "INSERT INTO tag_design (id_tag,id_design) VALUES (?, ?)",
+                (tag_id, design.id_design)
+            )
+        
+    
     db.connection.commit()
     db.connection.close()
     

@@ -200,6 +200,7 @@ def update_design(
     # if there is a new img, upload it to cloudinary and delete the old one
     # if there is a new ai, upload it to cloudinary and delete the old one
     old_design = db.get_design_by_id(id_design)
+    
     if img or ai:
         if img:
             img_url = upload_desing(img.file)
@@ -208,7 +209,13 @@ def update_design(
             ai_url = upload_ai(ai.file)
             delete_file_on_cloudinary(old_design["ai_url"])
     
-    id_list_of_tags = [int(tag_id) for tag_id in tags_in_string.split(",")]
+    
+    id_list_of_tags = [int(tag_id) for tag_id in tags_in_string.split(",")] if tags_in_string else []
+    print("old_design: ",old_design)
+    print("id_list_of_tags: ",id_list_of_tags)
+    updatedTags = id_list_of_tags if (id_list_of_tags != None) else old_design["tags"]
+    print("updatedTags: ",updatedTags)
+    
     db.update_design(
         design=Design(
             id_design=id_design,
@@ -216,7 +223,7 @@ def update_design(
             img_url=img_url if img else old_design["img_url"],
             ai_url=ai_url if ai else old_design["ai_url"]
         ),
-        list_of_tags_ids=id_list_of_tags if tags_in_string else old_design["tags"]
+        list_of_tags_ids=updatedTags
     )
     pass
 
