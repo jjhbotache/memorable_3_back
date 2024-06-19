@@ -21,11 +21,11 @@ class DatabaseConnection:
         # if the db is empty, create the tables
         self.cursor.execute("SELECT * FROM sqlite_master WHERE type='table';")
         tables = self.cursor.fetchall()
-        if len(tables) == 0:
-            self.create_tables()
+        # if len(tables) == 0:
+        self.create_tables()
         
     def create_tables(self):
-        # create the tables
+    # create the tables
         self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 google_sub TEXT PRIMARY KEY,
@@ -50,34 +50,20 @@ class DatabaseConnection:
             );
         """)
         self.cursor.execute("""
-            CREATE TABLE IF NOT EXISTS carts (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                id_user TEXT,
-                FOREIGN KEY (id_user) REFERENCES users(google_sub) ON DELETE CASCADE
-            );
-        """)
-        self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS cart_design (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                id_cart INTEGER,
-                id_designs INTEGER,
-                FOREIGN KEY (id_cart) REFERENCES carts(id) ON DELETE CASCADE,
-                FOREIGN KEY (id_designs) REFERENCES designs(id) ON DELETE CASCADE
-            );
-        """)
-        self.cursor.execute("""
-            CREATE TABLE IF NOT EXISTS favorite_lists (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
                 id_user TEXT,
-                FOREIGN KEY (id_user) REFERENCES users(google_sub) ON DELETE CASCADE
+                id_designs INTEGER,
+                FOREIGN KEY (id_user) REFERENCES users(google_sub) ON DELETE CASCADE,
+                FOREIGN KEY (id_designs) REFERENCES designs(id) ON DELETE CASCADE
             );
         """)
         self.cursor.execute("""
             CREATE TABLE IF NOT EXISTS favorite_list_design (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                id_favorite_list INTEGER,
+                id_user TEXT,
                 id_designs INTEGER,
-                FOREIGN KEY (id_favorite_list) REFERENCES favorite_lists(id) ON DELETE CASCADE,
+                FOREIGN KEY (id_user) REFERENCES users(google_sub) ON DELETE CASCADE,
                 FOREIGN KEY (id_designs) REFERENCES designs(id) ON DELETE CASCADE
             );
         """)
@@ -90,4 +76,4 @@ class DatabaseConnection:
                 FOREIGN KEY (id_design) REFERENCES designs(id) ON DELETE CASCADE
             );
         """)
-        
+    

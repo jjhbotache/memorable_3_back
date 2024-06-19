@@ -248,3 +248,106 @@ def export_db(source_path: str, destination_path: str):
         print("Destination directory not found.")
     except Exception as e:
         print(f"An error occurred during database export: {str(e)}")
+        
+ 
+ 
+# favorite designs crud
+def add_design_to_favorite(user_sub: str, design_id: int):
+    db = DatabaseConnection()
+    cursor = db.cursor
+    # if doesn't exist, add the user to the db
+    
+    cursor.execute(
+        """
+        INSERT INTO favorite_list_design (id_user, id_designs)
+        SELECT ?, ?
+        WHERE NOT EXISTS (
+            SELECT 1 FROM favorite_list_design WHERE id_user = ? AND id_designs = ?
+        )
+        """,
+        (user_sub, design_id, user_sub, design_id)
+    )
+    
+    db.connection.commit()
+    db.connection.close()
+
+def remove_design_from_favorite(user_sub: str, design_id: int):
+    db = DatabaseConnection()
+    cursor = db.cursor
+    cursor.execute(
+        """
+        DELETE FROM favorite_list_design
+        WHERE id_user = ? AND id_designs = ?
+        """,
+        (user_sub, design_id)
+    )
+    db.connection.commit()
+    db.connection.close()
+
+def get_favorite_designs(user_sub: str):
+    db = DatabaseConnection()
+    cursor = db.cursor
+    cursor.execute(
+        """
+        SELECT designs.*
+        FROM favorite_list_design
+        JOIN designs ON favorite_list_design.id_designs = designs.id
+        WHERE favorite_list_design.id_user = ?
+        """,
+        (user_sub,)
+    )
+    designs = cursor.fetchall()
+    columns = [column[0] for column in cursor.description]
+    designs = [dict(zip(columns, row)) for row in designs]
+    for design in designs: design["tags"] = get_tags_by_design_id(design["id"])
+    db.connection.close()
+    return designs
+
+# cart designs crud
+def add_design_to_cart(user_sub: str, design_id: int):
+    db = DatabaseConnection()
+    cursor = db.cursor
+    cursor.execute(
+        """
+        INSERT INTO cart_design (id_user, id_designs)
+        SELECT ?, ?
+        WHERE NOT EXISTS (
+            SELECT 1 FROM cart_design WHERE id_user = ? AND id_designs = ?
+        )
+        """,
+        (user_sub, design_id, user_sub, design_id)
+    )
+    db.connection.commit()
+    db.connection.close()
+
+def remove_design_from_cart(user_sub: str, design_id: int):
+    db = DatabaseConnection()
+    cursor = db.cursor
+    cursor.execute(
+        """
+        DELETE FROM cart_design
+        WHERE id_user = ? AND id_designs = ?
+        """,
+        (user_sub, design_id)
+    )
+    db.connection.commit()
+    db.connection.close()
+
+def get_cart_designs(user_sub: str):
+    db = DatabaseConnection()
+    cursor = db.cursor
+    cursor.execute(
+        """
+        SELECT designs.*
+        FROM cart_design
+        JOIN designs ON cart_design.id_designs = designs.id
+        WHERE cart_design.id_user = ?
+        """,
+        (user_sub,)
+    )
+    designs = cursor.fetchall()
+    columns = [column[0] for column in cursor.description]
+    designs = [dict(zip(columns, row)) for row in designs]
+    for design in designs: design["tags"] = get_tags_by_design_id(design["id"])
+    db.connection.close()
+    return designs

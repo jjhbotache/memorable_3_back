@@ -1,5 +1,6 @@
 from fastapi import FastAPI, File, Form,responses,Request,UploadFile
 from classes.design import Design
+from classes.favorite_and_cart_classes_request import CrudFavoriteAndCartDesignRequest
 from classes.tag import Tag
 from classes.user import User
 from classes.SendEmailClass import SendEmailClass
@@ -114,6 +115,7 @@ def get_designs_public():
         design["ai_url"] = ""
         
     return responses.JSONResponse(content=designs)
+
 @app.post("/design/create")
 @admin_only
 def create_design(
@@ -276,3 +278,39 @@ def import_db(request: Request, db_file: UploadFile = File(...)):
     
     return responses.JSONResponse(content={"status":"ok"})
     
+# favorite designs crud
+# Add a design to the favorite list
+@app.post("/favorite/add")
+def add_favorite_design(request: Request, requestClass:CrudFavoriteAndCartDesignRequest):
+    db.add_design_to_favorite(requestClass.user_sub, requestClass.design_id)
+    return responses.JSONResponse(content={"status": "Design added to favorites"})
+
+# Get favorite designs for a user
+@app.get("/favorite/{user_sub}")
+def get_favorite_design(request: Request, user_sub: str):
+    designs = db.get_favorite_designs(user_sub)
+    return responses.JSONResponse(content=designs)
+
+# Remove a design from the favorite list
+@app.delete("/favorite/remove")
+def remove_favorite_design(request: Request, requestClass:CrudFavoriteAndCartDesignRequest):
+    db.remove_design_from_favorite(requestClass.user_sub, requestClass.design_id)
+    return responses.JSONResponse(content={"status": "Design removed from favorites"})
+
+
+# cart designs crud
+# Add a design to the cart list
+@app.post("/cart/add")
+def add_cart_design(request: Request, requestClass: CrudFavoriteAndCartDesignRequest):
+    db.add_design_to_cart(requestClass.user_sub, requestClass.design_id)
+    return responses.JSONResponse(content={"status": "Design added to cart"})
+
+@app.get("/cart/{user_sub}")
+def get_cart_design(request: Request, user_sub: str):
+    designs = db.get_cart_designs(user_sub)
+    return responses.JSONResponse(content=designs)
+
+@app.delete("/cart/remove")
+def remove_cart_design(request: Request, requestClass: CrudFavoriteAndCartDesignRequest):
+    db.remove_design_from_cart(requestClass.user_sub, requestClass.design_id)
+    return responses.JSONResponse(content={"status": "Design removed from cart"})
