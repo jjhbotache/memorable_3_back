@@ -34,8 +34,8 @@ def admin_only(func):
         # print("real_list_of_google_sub_admins: ",real_list_of_google_sub_admins)
         # print("headers: ",request.headers)
         # print("google_sub: ",google_sub)
-        print(request.headers["google_sub"] in real_list_of_google_sub_admins)
-        if request.headers["google_sub"] in real_list_of_google_sub_admins:
+        print(google_sub in real_list_of_google_sub_admins)
+        if google_sub in real_list_of_google_sub_admins:
             return func(*args,**kwargs)
         else:
             return responses.JSONResponse(content={"status":"not allowed, only for admin"},status_code=401)
@@ -108,8 +108,10 @@ def get_designs(request:Request):
     return responses.JSONResponse(content=designs)
 
 @app.get("/designs/public")
-def get_designs_public():
-    designs = db.get_designs()
+def get_designs_public(request:Request):
+    # if the google_sub is in the headers, return the designs with loved and addedToCart
+    google_sub = request.headers["google_sub"]
+    designs = db.get_designs(google_sub)
     # for each design, remove the ai_url
     for design in designs:
         design["ai_url"] = ""
