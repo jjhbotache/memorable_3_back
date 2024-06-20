@@ -6,14 +6,14 @@ import shutil
 
 
 def get_user_by_google_sub(google_sub:str):
-    connection = DatabaseConnection()
-    cursor = connection.cursor
+    db = DatabaseConnection()
+    cursor = db.get_cursor()
     cursor.execute(
         "SELECT * FROM users WHERE google_sub = ?",
         (google_sub,)
     )
     user = cursor.fetchone()
-    connection.connection.close()
+    db.close_connection()
     return user
 
 
@@ -236,13 +236,13 @@ def update_user(user:User):
     db.close_connection()
     
 def set_new_user(user:User):
-    connection = DatabaseConnection()
-    connection.cursor.execute(
+    db = DatabaseConnection()
+    db.get_cursor().execute(
         "INSERT INTO users (google_sub, name, email, phone, img_url) VALUES (?, ?, ?, ?, ?)",
         (user.google_sub, user.name, user.email, user.phone, user.img_url)
     )
-    connection.connection.commit()
-    connection.connection.close()
+    db.get_connection().commit()
+    db.close_connection()
     
 def import_db(source_path: str, destination_path: str):
     try:

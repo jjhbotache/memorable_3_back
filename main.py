@@ -49,12 +49,18 @@ def read_root():
 @app.post("/user-login-signup")
 def get_set_user(user:User):
     user_found = db.get_user_by_google_sub(user.google_sub)
+    print("user_found: ",user_found)
     # if the user exists, return the user, else create a new user
     if user_found:
-        return responses.JSONResponse(content={"status":"ok"})
+        print("user found, welcome back!")
     else:
         db.set_new_user(user)
-        return responses.JSONResponse(content={"status":"ok"})
+        print("new user created!")
+        
+    return responses.JSONResponse(content={
+        "status":"ok",
+        "user":user.__dict__
+    })
     
 # 
 @app.get("/imgs")
