@@ -1,4 +1,5 @@
 from fastapi import FastAPI, File, Form,responses,Request,UploadFile
+from AI.ai_search import search_designs_with_ai
 from classes.design import Design
 from classes.favorite_and_cart_classes_request import CrudFavoriteAndCartDesignRequest
 from classes.tag import Tag
@@ -112,6 +113,11 @@ def delete_tag(tag:Tag,request:Request):
 def get_designs(request:Request):
     designs = db.get_designs()
     return responses.JSONResponse(content=designs)
+
+@app.get("/designs/ai/{searched_text}")
+def get_designs_AI(searched_text:str):
+    result = search_designs_with_ai(searched_text)
+    return responses.JSONResponse(content={"status":"ok","result":result})
 
 @app.get("/designs/public")
 def get_designs_public(request:Request):
