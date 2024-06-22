@@ -252,7 +252,6 @@ def get_users(request:Request):
     return responses.JSONResponse(content=users)
 
 @app.delete("/user/delete/{google_sub}")
-@admin_only
 def delete_user(google_sub:str,request:Request):
     db.delete_user(google_sub)
     return responses.JSONResponse(content={"status":"ok"})
@@ -328,3 +327,36 @@ def get_cart_design(request: Request, user_sub: str):
 def remove_cart_design(request: Request, requestClass: CrudFavoriteAndCartDesignRequest):
     db.remove_design_from_cart(requestClass.user_sub, requestClass.design_id)
     return responses.JSONResponse(content={"status": "Design removed from cart"})
+
+
+# crud rutes for te extra info table
+# extra info crud
+@app.post("/extra_info/create/{name}/{value}")
+@admin_only
+def create_extra_info(name: str, value: str, request: Request):
+    db.set_extra_info(name, value)
+    return {"status": "ok"}
+
+@app.get("/extra_info/{name}")
+@admin_only
+def get_extra_info(name: str, request: Request):
+    extra_info = db.get_extra_info(name)
+    return extra_info
+
+@app.get("/extra_info")
+@admin_only
+def get_all_extra_info(request: Request):
+    extra_info = db.get_all_extra_info()
+    return extra_info
+
+@app.put("/extra_info/update/{name}/{value}")
+@admin_only
+def update_extra_info(name: str, value: str, request: Request):
+    db.update_extra_info(name, value)
+    return {"status": "ok"}
+
+@app.delete("/extra_info/delete/{name}")
+@admin_only
+def delete_extra_info(name: str, request: Request):
+    db.delete_extra_info(name)
+    return {"status": "ok"}

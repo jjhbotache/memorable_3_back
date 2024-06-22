@@ -77,4 +77,10 @@ class DatabaseConnection:
                 FOREIGN KEY (id_design) REFERENCES designs(id) ON DELETE CASCADE
             );
         """)
-    
+        
+        self.get_cursor().execute("""
+            CREATE TABLE IF NOT EXISTS extra_info (
+                name TEXT NOT NULL,
+                value TEXT
+            );
+        """)

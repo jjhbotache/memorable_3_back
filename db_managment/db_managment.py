@@ -364,3 +364,56 @@ def get_cart_designs(user_sub: str):
     for design in designs: design["tags"] = get_tags_by_design_id(design["id"])
     db.close_connection()
     return designs
+
+
+#extra info crud
+def set_extra_info(name: str, value: str):
+    db = DatabaseConnection()
+    cursor = db.get_cursor()
+    cursor.execute(
+        "INSERT INTO extra_info (name, value) VALUES (?, ?)",
+        (name, value)
+    )
+    db.get_connection().commit()
+    db.close_connection()
+
+def get_extra_info(name: str):
+    db = DatabaseConnection()
+    cursor = db.get_cursor()
+    cursor.execute(
+        "SELECT * FROM extra_info WHERE name = ?",
+        (name,)
+    )
+    extra_info = cursor.fetchone()
+    db.close_connection()
+    return extra_info
+
+def get_all_extra_info():
+    db = DatabaseConnection()
+    cursor = db.get_cursor()
+    cursor.execute("SELECT * FROM extra_info")
+    extra_info = cursor.fetchall()
+    columns = [column[0] for column in cursor.description]
+    extra_info = [dict(zip(columns, row)) for row in extra_info]
+    db.close_connection()
+    return extra_info
+
+def update_extra_info(name: str, value: str):
+    db = DatabaseConnection()
+    cursor = db.get_cursor()
+    cursor.execute(
+        "UPDATE extra_info SET value = ? WHERE name = ?",
+        (value, name)
+    )
+    db.get_connection().commit()
+    db.close_connection()
+
+def delete_extra_info(name: str):
+    db = DatabaseConnection()
+    cursor = db.get_cursor()
+    cursor.execute(
+        "DELETE FROM extra_info WHERE name = ?",
+        (name,)
+    )
+    db.get_connection().commit()
+    db.close_connection()
