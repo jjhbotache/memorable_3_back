@@ -130,6 +130,14 @@ def get_designs_public(request:Request):
         
     return responses.JSONResponse(content=designs)
 
+@app.get("/design/public/{id_design}")
+def get_design_public(id_design:int):
+    design = db.get_design_by_id(id_design)
+    # delete the ai_url
+    design["ai_url"] = ""
+    return responses.JSONResponse(content=design)
+
+
 @app.post("/design/create")
 @admin_only
 def create_design(
@@ -338,8 +346,7 @@ def create_extra_info(name: str, value: str, request: Request):
     return {"status": "ok"}
 
 @app.get("/extra_info/{name}")
-@admin_only
-def get_extra_info(name: str, request: Request):
+def get_extra_info(name: str):
     extra_info = db.get_extra_info(name)
     return extra_info
 

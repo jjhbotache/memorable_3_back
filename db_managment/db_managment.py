@@ -385,6 +385,7 @@ def get_extra_info(name: str):
         (name,)
     )
     extra_info = cursor.fetchone()
+    extra_info = dict(zip([column[0] for column in cursor.description], extra_info))
     db.close_connection()
     return extra_info
 
