@@ -131,8 +131,11 @@ def get_designs_public(request:Request):
     return responses.JSONResponse(content=designs)
 
 @app.get("/design/public/{id_design}")
-def get_design_public(id_design:int):
-    design = db.get_design_by_id(id_design)
+def get_design_public(id_design:int,request:Request):
+    # if the google_sub is in the headers, return the designs with loved and addedToCart
+    google_sub = request.headers["google_sub"]
+    
+    design = db.get_design_by_id(id_design,google_sub)
     # delete the ai_url
     design["ai_url"] = ""
     return responses.JSONResponse(content=design)

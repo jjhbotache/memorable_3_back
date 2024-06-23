@@ -144,7 +144,7 @@ def get_designs(google_sub:str):
     
     return designs
 
-def get_design_by_id(id_design:int):
+def get_design_by_id(id_design:int, google_sub:str):
     db = DatabaseConnection()
     cursor = db.get_cursor()
     cursor.execute(
@@ -156,6 +156,15 @@ def get_design_by_id(id_design:int):
     design_dict = dict(zip([column[0] for column in cursor.description], design))
     # get also the tags
     design_dict["tags"] = get_tags_by_design_id(id_design)
+    
+    if(google_sub != None):
+        # if the google sub is provided, get the favorite designs and the cart designs
+        favorite_designs = get_favorite_designs(google_sub)
+        cart_designs = get_cart_designs(google_sub)
+        
+        # set the flags
+        design_dict["loved"] = design_dict["id"] in [fav["id"] for fav in favorite_designs]
+        design_dict["addedToCart"] = design_dict["id"] in [cart["id"] for cart in cart_designs]
     
     db.close_connection()
     return design_dict
@@ -371,7 +380,7 @@ def set_extra_info(name: str, value: str):
     db = DatabaseConnection()
     cursor = db.get_cursor()
     cursor.execute(
-        "INSERT INTO extra_info (name, value) VALUES (?, ?)",
+        """INSERT INTO extra_info (name, value) VALUES (?, ?)""",
         (name, value)
     )
     db.get_connection().commit()
@@ -381,7 +390,7 @@ def get_extra_info(name: str):
     db = DatabaseConnection()
     cursor = db.get_cursor()
     cursor.execute(
-        "SELECT * FROM extra_info WHERE name = ?",
+        """SELECT * FROM extra_info WHERE name = ?""",
         (name,)
     )
     extra_info = cursor.fetchone()
@@ -403,7 +412,7 @@ def update_extra_info(name: str, value: str):
     db = DatabaseConnection()
     cursor = db.get_cursor()
     cursor.execute(
-        "UPDATE extra_info SET value = ? WHERE name = ?",
+        """UPDATE extra_info SET value = ? WHERE name = ?""",
         (value, name)
     )
     db.get_connection().commit()
@@ -413,7 +422,7 @@ def delete_extra_info(name: str):
     db = DatabaseConnection()
     cursor = db.get_cursor()
     cursor.execute(
-        "DELETE FROM extra_info WHERE name = ?",
+        """DELETE FROM extra_info WHERE name = ?"""     ,
         (name,)
     )
     db.get_connection().commit()
