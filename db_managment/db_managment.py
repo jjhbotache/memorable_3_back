@@ -117,7 +117,7 @@ def set_design(design: Design, list_of_tags_ids: list[int]):
     db.get_connection().commit()
     db.close_connection()
 
-def get_designs(google_sub:str):
+def get_designs(google_sub:str = None):
     # if the user is not logged in, return all the designs
     
     db = DatabaseConnection()
