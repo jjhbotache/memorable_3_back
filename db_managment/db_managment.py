@@ -271,7 +271,34 @@ def export_db(source_path: str, destination_path: str):
     except Exception as e:
         print(f"An error occurred during database export: {str(e)}")
         
- 
+#  add number for one user
+def add_or_reset_number_to_user(google_sub: str, number: str):
+    db = DatabaseConnection()
+    cursor = db.get_cursor()
+    cursor.execute(
+        """
+        UPDATE users
+        SET phone = ?
+        WHERE google_sub = ?
+        """,
+        (number, google_sub)
+    )
+    db.get_connection().commit()
+    db.close_connection()
+    
+def delete_number_to_user(google_sub: str):
+    db = DatabaseConnection()
+    cursor = db.get_cursor()
+    cursor.execute(
+        """
+        UPDATE users
+        SET phone = NULL
+        WHERE google_sub = ?
+        """,
+        (google_sub,)
+    )
+    db.get_connection().commit()
+    db.close_connection()
  
 # favorite designs crud
 def add_design_to_favorite(user_sub: str, design_id: int):

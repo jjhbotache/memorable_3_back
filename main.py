@@ -277,11 +277,25 @@ def update_user(user:User,request:Request):
     db.update_user(user)
     return responses.JSONResponse(content={"status":"ok"})
 
+@app.get("/user/set_number/{google_sub}/{number}")
+def reset_user_number(google_sub:str,number:str):
+    db.add_or_reset_number_to_user(
+        google_sub=google_sub,
+        number=number
+    )
+    return responses.JSONResponse(content={"status":"ok"})
+
+@app.get("user/delete-phone/{google_sub}")
+def delete_user_phone(google_sub:str):
+    db.delete_user_phone(google_sub)
+    return responses.JSONResponse(content={"status":"ok"})
+
 # route to verify the user is an admin or not
 @app.get("/verify-admin")
 @admin_only
 def verify_admin(request:Request):
     return responses.JSONResponse(content={"status":"ok"})
+
 
 
 @app.get("/db/export")

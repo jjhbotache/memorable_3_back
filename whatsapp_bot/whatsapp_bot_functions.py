@@ -64,7 +64,5 @@ def confirm_buyment(
          """.strip()},        
       ]
     }
-  print(payload)
   response = requests.post(api_url, json=payload)
-  print(response.__dict__)
   return response.json()
