@@ -2,6 +2,7 @@ from fastapi import FastAPI, File, Form,responses,Request,UploadFile
 from AI.ai_search import search_designs_with_ai
 from classes.design import Design
 from classes.favorite_and_cart_classes_request import CrudFavoriteAndCartDesignRequest
+from classes.send_whats_classes import ConfirmWhatsRequest, SendWhatsImgRequest, SendWhatsRequest
 from classes.tag import Tag
 from classes.user import User
 from classes.SendEmailClass import SendEmailClass
@@ -9,6 +10,7 @@ from classes.databaseConnection import DatabaseConnection
 from db_managment import db_managment as db
 from fastapi.middleware.cors import CORSMiddleware
 import os
+from helpers.img_to_imgBase64 import url_to_base64
 from helpers.send_mail import send_email as send_mail_function
 from helpers.security import decrypt_message
 from helpers.compressor import *
@@ -17,7 +19,7 @@ from functools import wraps
 from cloudinary_manager.cloudinary_manager import delete_file_on_cloudinary, upload_ai,upload_desing 
 from fastapi.responses import FileResponse
 
-from whatsapp_bot.whatsapp_bot_functions import main, whats_login
+from whatsapp_bot.whatsapp_bot_functions import confirm_buyment, send_whats_img, send_whats_msg
 
 app = FastAPI()
 app.add_middleware(
@@ -373,11 +375,30 @@ def delete_extra_info(name: str, request: Request):
     db.delete_extra_info(name)
     return {"status": "ok"}
 
-@app.get("/whatsapp/start")
-def send_phone_msg():
-    try:
-        whats_login()
-        # response with the screenshot in temp
-        return FileResponse("temp/screenshot.png")
-    except Exception as e:
-        return responses.JSONResponse(content={"status":"error","error":str(e)})
+@app.post("/whatsapp/send/msg")
+@admin_only
+def send_phone_msg(data:SendWhatsRequest,request:Request):
+    response = send_whats_msg(data.to_phone, data.message)
+    return responses.JSONResponse(content={"status":"ok","msg":str(response)})
+
+@app.post("/whatsapp/send/img")
+@admin_only
+def send_phone_msg(data:SendWhatsImgRequest):
+    response = send_whats_img(
+        phone=data.to_phone,
+        imgBase64=url_to_base64(data.img_url)
+    )
+    return responses.JSONResponse(content={"status":"ok","msg":str(response)})
+
+@app.post("/whatsapp/design/response")
+def send_design_response(data:ConfirmWhatsRequest):
+    response = confirm_buyment(
+        phone=data.to_phone,
+        img_base_64=url_to_base64(data.design_img_url),
+        desing_id=data.design_id,
+        quantity=data.quantity,
+        wine=data.wine,
+        buy=data.buy,
+        name=data.name
+    )
+    return responses.JSONResponse(content={"status":"ok","msg":str(response)})
