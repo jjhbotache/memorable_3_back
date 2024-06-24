@@ -395,7 +395,7 @@ def send_design_response(data:ConfirmWhatsRequest):
     response = confirm_buyment(
         phone=data.to_phone,
         img_base_64=url_to_base64(data.design_img_url),
-        desing_id=data.design_id,
+        design_id=data.design_id,
         quantity=data.quantity,
         wine=data.wine,
         buy=data.buy,
