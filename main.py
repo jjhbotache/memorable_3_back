@@ -17,6 +17,8 @@ from functools import wraps
 from cloudinary_manager.cloudinary_manager import delete_file_on_cloudinary, upload_ai,upload_desing 
 from fastapi.responses import FileResponse
 
+from whatsapp_bot.whatsapp_bot_functions import main, whats_login
+
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -370,3 +372,12 @@ def update_extra_info(name: str, value: str, request: Request):
 def delete_extra_info(name: str, request: Request):
     db.delete_extra_info(name)
     return {"status": "ok"}
+
+@app.get("/whatsapp/start")
+def send_phone_msg():
+    try:
+        whats_login()
+        # response with the screenshot in temp
+        return FileResponse("temp/screenshot.png")
+    except Exception as e:
+        return responses.JSONResponse(content={"status":"error","error":str(e)})
