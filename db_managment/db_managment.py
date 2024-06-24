@@ -13,6 +13,11 @@ def get_user_by_google_sub(google_sub:str):
         (google_sub,)
     )
     user = cursor.fetchone()
+    
+    # parse the user data to a User object
+    if user != None:
+        user = dict(zip([column[0] for column in cursor.description], user))
+        
     db.close_connection()
     return user
 
