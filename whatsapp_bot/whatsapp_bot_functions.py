@@ -21,9 +21,9 @@ def whats_login():
   shutil.move('screenshot.png', 'temp/screenshot.png')
   #move the file to the temp folder
 
-# def main():
-#   # get the current hr and min
-#   now = datetime.datetime.now()
-#   hr = now.hour
-#   mi = now.minute + 1
-#   pywk.sendwhatmsg("+573012167977","hi",hr,mi)
+def main():
+  # get the current hr and min
+  now = datetime.datetime.now()
+  hr = now.hour
+  mi = now.minute + 1
+  pywk.sendwhatmsg("+573012167977","hi",hr,mi)
