@@ -407,6 +407,7 @@ def send_phone_msg(data:SendWhatsImgRequest):
 
 @app.post("/whatsapp/design/response")
 def send_design_response(data:ConfirmWhatsRequest):
+    print("data: ",data)
     response = confirm_buyment(
         phone=data.to_phone,
         img_base_64=url_to_base64(data.design_img_url),
