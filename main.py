@@ -65,7 +65,7 @@ def get_set_user(user:User):
         
     return responses.JSONResponse(content={
         "status":"ok",
-        "user": user_found or user
+        "user": user_found or user.__dict__
     })
     
 # 
