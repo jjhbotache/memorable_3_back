@@ -59,13 +59,13 @@ def get_set_user(user:User):
     if user_found:
         print("user found, welcome back!")
     else:
-        user_found = user
         db.set_new_user(user)
         print("new user created!")
         
+        
     return responses.JSONResponse(content={
         "status":"ok",
-        "user": user_found
+        "user": user_found or user
     })
     
 # 
