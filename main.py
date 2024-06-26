@@ -81,7 +81,12 @@ def send_email(data:SendEmailClass):
     send_mail_function(
         recipent=data.recipent,
         subject=data.subject,
-        message=data.message
+        message=f"""
+        from: {data.from_name}
+        email: {data.from_email}
+        message: 
+        {data.message}
+        """.trim(),
     )
     return responses.JSONResponse(content={"status":"ok"})
 
