@@ -86,7 +86,7 @@ def send_email(data:SendEmailClass):
         email: {data.from_email}
         message: 
         {data.message}
-        """.trim(),
+        """.strip(),
     )
     return responses.JSONResponse(content={"status":"ok"})
 
