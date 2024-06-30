@@ -2,12 +2,14 @@ import requests
 import dotenv
 import os
 
+from whatsapp_bot.token_crud import read_token
+
 dotenv.load_dotenv()
 
 
 
 api_url = "https://script.google.com/macros/s/AKfycbyoBhxuklU5D3LTguTcYAS85klwFINHxxd-FroauC4CmFVvS0ua/exec"
-WHATS_TOKEN = os.getenv("WHATS_TOKEN")
+WHATS_TOKEN = read_token()
 # token from: https://anlusoftware.blogspot.com/
 
 def send_whats_msg(phone, msg:str):
