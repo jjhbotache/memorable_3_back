@@ -2,7 +2,7 @@ import requests
 import dotenv
 import os
 
-from whatsapp_bot.token_crud import read_token
+from .token_crud import read_token
 
 dotenv.load_dotenv()
 
