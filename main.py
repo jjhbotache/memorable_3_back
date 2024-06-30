@@ -19,6 +19,7 @@ from functools import wraps
 from cloudinary_manager.cloudinary_manager import delete_file_on_cloudinary, upload_ai,upload_desing 
 from fastapi.responses import FileResponse
 
+from whatsapp_bot.token_crud import create_token, delete_token, read_token, update_token
 from whatsapp_bot.whatsapp_bot_functions import confirm_buyment, send_whats_img, send_whats_msg
 
 app = FastAPI()
@@ -423,3 +424,39 @@ def send_design_response(data:ConfirmWhatsRequest):
         name=data.name
     )
     return responses.JSONResponse(content={"status":"ok","msg":str(response)})
+
+# Token CRUD routes
+@app.post("/token/create/{token}")
+@admin_only
+def create_token_route(token: str, request: Request):
+    if create_token(token):
+        return responses.JSONResponse(content={"status": "Token created"})
+    else:
+        return responses.JSONResponse(content={"status": "Token already exists"})
+
+@app.get("/token/read")
+@admin_only
+def read_token_route(request: Request):
+    token = read_token()
+    if token:
+        return responses.JSONResponse(content={"token": token})
+    else:
+        return responses.JSONResponse(content={"status": "Token not found"})
+
+@app.put("/token/update/{new_token}")
+@admin_only
+def update_token_route(new_token: str, request: Request):
+    if update_token(new_token):
+        return responses.JSONResponse(content={"status": "Token updated"})
+    else:
+        return responses.JSONResponse(content={"status": "Token not found"})
+
+@app.delete("/token/delete")
+@admin_only
+def delete_token_route(request: Request):
+    if delete_token():
+        return responses.JSONResponse(content={"status": "Token deleted"})
+    else:
+        return responses.JSONResponse(content={"status": "Token not found"})
+
+
