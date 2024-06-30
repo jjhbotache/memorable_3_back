@@ -56,7 +56,7 @@ def confirm_buyment(
   
   # capitalize first letters of name
   name = name.title() if name else None
-  
+  print(f"using token: {WHATS_TOKEN}")
   payload = {
     "op": "registermessage",
     "token_qr": WHATS_TOKEN, "mensajes": 
