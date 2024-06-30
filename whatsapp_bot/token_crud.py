@@ -1,29 +1,33 @@
-import os
+from pathlib import Path
 
 FILE_NAME = "token.bin"
 
 def create_token(token):
-  if not os.path.exists(FILE_NAME):
-    with open(FILE_NAME, "wb") as file:
+  file_path = Path(FILE_NAME)
+  if not file_path.exists():
+    with file_path.open("wb") as file:
       file.write(token.encode())
     return True
   return False
 
 def read_token():
-  if os.path.exists(FILE_NAME):
-    with open(FILE_NAME, "rb") as file:
+  file_path = Path(FILE_NAME)
+  if file_path.exists():
+    with file_path.open("rb") as file:
       return file.read().decode()
   return None
 
 def update_token(new_token):
-  if os.path.exists(FILE_NAME):
-    with open(FILE_NAME, "wb") as file:
+  file_path = Path(FILE_NAME)
+  if file_path.exists():
+    with file_path.open("wb") as file:
       file.write(new_token.encode())
     return True
   return False
 
 def delete_token():
-  if os.path.exists(FILE_NAME):
-    os.remove(FILE_NAME)
+  file_path = Path(FILE_NAME)
+  if file_path.exists():
+    file_path.unlink()
     return True
   return False
