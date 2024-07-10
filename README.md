@@ -2,6 +2,8 @@
 ## Description
 Memorable Backend is the core server-side component of the Memorable application, focusing on personalized wine bottle customization and ordering. It handles data for the designs that are shown and much more.
 
+![](fastAPI.png)
+
 ## Core Features
 - **Show Designs:** Allows users to view designs and admins to manage them.
 - **Order Management:** Facilitates the advertisement of new orders to admins.
@@ -12,6 +14,8 @@ Memorable Backend is the core server-side component of the Memorable application
 - **Cloudinary Integration:** Integrates with Cloudinary for image uploads and transformations.
 - **WhatsApp Bot Functions:** Implements functions for sending WhatsApp messages and images.
 - **Admin Authentication:** Implements an `admin_only` decorator to restrict access to admin-only routes.
+
+![](FastAPI.gif)
 
 ## Technologies Used
 - **Python:** Serves as the primary programming language, offering robustness and flexibility for backend development.
