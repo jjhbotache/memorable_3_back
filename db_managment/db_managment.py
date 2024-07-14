@@ -149,7 +149,7 @@ def get_designs(google_sub:str = None):
     
     return designs
 
-def get_design_by_id(id_design:int, google_sub:str):
+def get_design_by_id(id_design:int, google_sub:str = None):
     db = DatabaseConnection()
     cursor = db.get_cursor()
     cursor.execute(
