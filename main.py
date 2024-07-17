@@ -50,6 +50,15 @@ def admin_only(func):
 
 @app.get("/")
 def read_root():
+    # connect and disconnect from db
+    db = DatabaseConnection()
+    cursor = db.get_cursor()
+    print(cursor)
+    print(db)
+    db.create_tables()
+    
+    db.close_connection()
+    
     return {"Hello": "World"}
  
 @app.post("/user-login-signup")

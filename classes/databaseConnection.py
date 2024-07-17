@@ -1,5 +1,11 @@
 import sqlite3
 import threading
+import libsql_experimental as libsql
+import os
+import dotenv
+
+dotenv.load_dotenv()
+
 
 class DatabaseConnection:
     _instance = None
@@ -13,7 +19,14 @@ class DatabaseConnection:
 
     def get_connection(self):
         if not hasattr(self._connection_holder, "connection"):
-            self._connection_holder.connection = sqlite3.connect(self.database_name, check_same_thread=False)
+            
+            # self._connection_holder.connection = sqlite3.connect(self.database_name, check_same_thread=False)
+            self._connection_holder.connection = libsql.connect(
+                "local.db",
+                sync_url="libsql://memorabledb-jjhbotache.turso.io",
+                auth_token=os.getenv("DB_TOKEN"),
+                check_same_thread=False
+                )
         return self._connection_holder.connection
 
     def get_cursor(self):
@@ -21,13 +34,15 @@ class DatabaseConnection:
         return connection.cursor()
     
     def close_connection(self):
+        print("cant closing connection in turso ")
+        return
         if hasattr(self._connection_holder, "connection"):
             self._connection_holder.connection.close()
             del self._connection_holder.connection
         
     def create_tables(self):
     # create the tables
-        self.get_cursor.execute("""
+        self.get_cursor().execute("""
             CREATE TABLE IF NOT EXISTS users (
                 google_sub TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
@@ -36,7 +51,7 @@ class DatabaseConnection:
                 img_url TEXT
             );
         """)
-        self.get_cursor.execute("""
+        self.get_cursor().execute("""
             CREATE TABLE IF NOT EXISTS designs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
@@ -44,13 +59,13 @@ class DatabaseConnection:
                 ai_url TEXT
             );
         """)
-        self.get_cursor.execute("""
+        self.get_cursor().execute("""
             CREATE TABLE IF NOT EXISTS tags (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL
             );
         """)
-        self.get_cursor.execute("""
+        self.get_cursor().execute("""
             CREATE TABLE IF NOT EXISTS cart_design (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 id_user TEXT,
@@ -59,7 +74,7 @@ class DatabaseConnection:
                 FOREIGN KEY (id_designs) REFERENCES designs(id) ON DELETE CASCADE
             );
         """)
-        self.get_cursor.execute("""
+        self.get_cursor().execute("""
             CREATE TABLE IF NOT EXISTS favorite_list_design (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 id_user TEXT,
@@ -68,7 +83,7 @@ class DatabaseConnection:
                 FOREIGN KEY (id_designs) REFERENCES designs(id) ON DELETE CASCADE
             );
         """)
-        self.get_cursor.execute("""
+        self.get_cursor().execute("""
             CREATE TABLE IF NOT EXISTS tag_design (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 id_tag INTEGER,
@@ -84,3 +99,5 @@ class DatabaseConnection:
                 value TEXT
             );
         """)
+        
+        print("Created DB")
