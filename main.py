@@ -6,7 +6,7 @@ from classes.send_whats_classes import ConfirmWhatsRequest, SendWhatsImgRequest,
 from classes.tag import Tag
 from classes.user import User
 from classes.SendEmailClass import SendEmailClass
-from classes.databaseConnection import local_db_name
+from classes.databaseConnection import local_db_name,import_db
 from db_managment import db_managment as db
 from fastapi.middleware.cors import CORSMiddleware
 import os
@@ -311,20 +311,22 @@ def verify_admin(request:Request):
 @app.get("/db/export")
 @admin_only
 def export_db(request: Request):
-    
-    # Return the exported database file as a response
-    return FileResponse(local_db_name, filename="database.db")
+    filename = "database.db"
+    shutil.copy(local_db_name, filename)
+    print(f"Base de datos exportada como {filename}")
+    return FileResponse(filename, filename=filename)
 
 @app.post("/db/import")
 @admin_only
-def import_db(request: Request, db_file: UploadFile = File(...)):
-    # overwrite the current database with the uploaded file
-    with open(local_db_name, "wb") as f:
-        f.write(db_file.file.read()) 
+def import_db_route(request: Request, db_file: UploadFile = File(...)):
+    global conn
+    filename = "uploaded_database.db"
+    
+    with open(filename, "wb") as f:
+        f.write(db_file.file.read())
         
-    
-    return responses.JSONResponse(content={"status":"ok"})
-    
+    import_db(filename)
+    return responses.JSONResponse(content={"status": "ok"})
 # favorite designs crud
 # Add a design to the favorite list
 @app.post("/favorite/add")

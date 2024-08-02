@@ -1,3 +1,4 @@
+import shutil
 import libsql_experimental as libsql
 from dotenv import load_dotenv
 import os
@@ -9,9 +10,13 @@ turso_url = "libsql://memorabledb-jjhbotache.turso.io"
 turso_token = "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3MjI2NDA3MDcsImlkIjoiNjhhYzg3M2MtNmYxZC00OTU4LTg4ZTItNDdjNzliNmQwNGZiIn0.mxbmBDsiG7cjsvPRxbJBSMi8EefjccTI802B0BJ-e9f-wI3iO7icdaamF-qloMbAfdj7RNC33w8M6LPJWUJEBg"
 
 local_db_name = "local.db"
-conn = libsql.connect(local_db_name, sync_url=turso_url, auth_token=turso_token)
-print("Connection established")
-print(conn)
+conn = None
+def connect():
+    global conn
+    conn = libsql.connect(local_db_name, sync_url=turso_url, auth_token=turso_token)
+
+connect
+
 def create_tables():
         global conn
         # Users table
@@ -95,4 +100,13 @@ def fetch_query(query):
     cursor = conn.execute(query)
     return cursor.fetchall()
 
+
+def import_db(new_db_path):
+    global conn
+    if os.path.exists(new_db_path):
+        shutil.copy(new_db_path, local_db_name)
+        conn = libsql.connect(local_db_name, sync_url=turso_url, auth_token=turso_token)
+    else:
+        print(f"El archivo {new_db_path} no existe.")
+connect()
 create_tables()
