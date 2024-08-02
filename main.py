@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, Form,responses,Request,UploadFile
+from fastapi import FastAPI, File, Form, HTTPException,responses,Request,UploadFile
 from AI.ai_search import search_designs_with_ai
 from classes.design import Design
 from classes.favorite_and_cart_classes_request import CrudFavoriteAndCartDesignRequest
@@ -18,10 +18,11 @@ from constants import list_of_google_sub_admins
 from functools import wraps
 from cloudinary_manager.cloudinary_manager import delete_file_on_cloudinary, upload_ai,upload_desing 
 from fastapi.responses import FileResponse
-
+import shutil
 from whatsapp_bot.token_crud import create_token, delete_token, read_token, update_token
 from whatsapp_bot.whatsapp_bot_functions import confirm_buyment, send_whats_img, send_whats_msg
 
+from db_managment import db_managment as db_tools
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -314,25 +315,24 @@ def verify_admin(request:Request):
 
 
 
+
 @app.get("/db/export")
 @admin_only
 def export_db(request: Request):
-    # Export the database and save it to a file
-    db.export_db(
-        source_path=DatabaseConnection.database_name,
-        destination_path= (path_to_exported_db_file:=os.path.join(os.getcwd(),"temp", "exported_db.db"))
-    )
-    
     
     # Return the exported database file as a response
-    return FileResponse(path_to_exported_db_file, filename="database.db")
+    return FileResponse(DatabaseConnection.database_name, filename="database.db")
 
 @app.post("/db/import")
 @admin_only
 def import_db(request: Request, db_file: UploadFile = File(...)):
     # overwrite the current database with the uploaded file
     with open(DatabaseConnection.database_name, "wb") as f:
-        f.write(db_file.file.read())    
+        f.write(db_file.file.read()) 
+        
+    db = DatabaseConnection()
+    conn = db.get_connection()
+    conn.sync()
     
     return responses.JSONResponse(content={"status":"ok"})
     

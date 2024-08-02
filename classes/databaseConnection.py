@@ -9,7 +9,7 @@ dotenv.load_dotenv()
 
 class DatabaseConnection:
     _instance = None
-    database_name = 'data.db'
+    database_name = 'local.db'
     _connection_holder = threading.local()
 
     def __new__(cls):
@@ -22,11 +22,14 @@ class DatabaseConnection:
             
             # self._connection_holder.connection = sqlite3.connect(self.database_name, check_same_thread=False)
             self._connection_holder.connection = libsql.connect(
-                "local.db",
+                self.database_name,
                 sync_url="libsql://memorabledb-jjhbotache.turso.io",
                 auth_token=os.getenv("DB_TOKEN"),
-                check_same_thread=False
+                check_same_thread=False,
+                sync_interval=30
                 )
+            
+            self._connection_holder.connection.sync()
         return self._connection_holder.connection
 
     def get_cursor(self):

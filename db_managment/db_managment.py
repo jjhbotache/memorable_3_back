@@ -269,7 +269,7 @@ def import_db(source_path: str, destination_path: str):
 
 def export_db(source_path: str, destination_path: str):
     try:
-        shutil.copyfile(source_path, destination_path)
+        
         print("Database exported successfully.")
     except FileNotFoundError:
         print("Destination directory not found.")
