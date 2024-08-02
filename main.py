@@ -6,7 +6,7 @@ from classes.send_whats_classes import ConfirmWhatsRequest, SendWhatsImgRequest,
 from classes.tag import Tag
 from classes.user import User
 from classes.SendEmailClass import SendEmailClass
-from classes.databaseConnection import DatabaseConnection 
+from classes.databaseConnection import local_db_name
 from db_managment import db_managment as db
 from fastapi.middleware.cors import CORSMiddleware
 import os
@@ -52,14 +52,6 @@ def admin_only(func):
 @app.get("/")
 def read_root():
     # connect and disconnect from db
-    db = DatabaseConnection()
-    cursor = db.get_cursor()
-    print(cursor)
-    print(db)
-    db.create_tables()
-    
-    db.close_connection()
-    
     return {"Hello": "World"}
  
 @app.post("/user-login-signup")
@@ -321,18 +313,15 @@ def verify_admin(request:Request):
 def export_db(request: Request):
     
     # Return the exported database file as a response
-    return FileResponse(DatabaseConnection.database_name, filename="database.db")
+    return FileResponse(local_db_name, filename="database.db")
 
 @app.post("/db/import")
 @admin_only
 def import_db(request: Request, db_file: UploadFile = File(...)):
     # overwrite the current database with the uploaded file
-    with open(DatabaseConnection.database_name, "wb") as f:
+    with open(local_db_name, "wb") as f:
         f.write(db_file.file.read()) 
         
-    db = DatabaseConnection()
-    conn = db.get_connection()
-    conn.sync()
     
     return responses.JSONResponse(content={"status":"ok"})
     

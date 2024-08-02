@@ -1,461 +1,183 @@
 from classes.user import User
-from classes.databaseConnection import DatabaseConnection
 from classes.design import Design
 from classes.tag import Tag
-import shutil
+from classes.databaseConnection import execute_query, fetch_query, local_db_name
 
+def get_user_by_google_sub(google_sub: str):
+    query = f"SELECT * FROM users WHERE google_sub = '{google_sub}'"
+    user = fetch_query(query)
+    return user[0] if user else None
 
-def get_user_by_google_sub(google_sub:str):
-    db = DatabaseConnection()
-    cursor = db.get_cursor()
-    cursor.execute(
-        "SELECT * FROM users WHERE google_sub = ?",
-        (google_sub,)
-    )
-    user = cursor.fetchone()
-    
-    # parse the user data to a User object
-    if user != None:
-        user = dict(zip([column[0] for column in cursor.description], user))
-        
-    db.close_connection()
-    return user
-
-
-    
 def get_img_urls():
-    db = DatabaseConnection()
-    cursor = db.get_cursor()
-    cursor.execute( "SELECT img_url FROM designs" )
-    img_urls = cursor.fetchall()
-    db.close_connection()
+    query = "SELECT img_url FROM designs"
+    img_urls = fetch_query(query)
     return img_urls
 
-    
-    
-# tags
 def set_tag(tag: Tag):
-    db = DatabaseConnection()
-    cursor = db.get_cursor()
-    cursor.execute(
-        "INSERT INTO tags (name) VALUES (?)",
-        (tag.name,)
-    )
-    db.get_connection().commit()
-    db.close_connection()
-    # update the tag id and return it
-    tag.id_tag = cursor.lastrowid
+    query = f"INSERT INTO tags (name) VALUES ('{tag.name}')"
+    execute_query(query)
+    tag.id_tag = fetch_query("SELECT last_insert_rowid()")[0][0]
     return tag
 
 def get_tags_from_db():
-    db = DatabaseConnection()
-    cursor = db.get_cursor()
-    cursor.execute("SELECT * FROM tags")
-    tags = cursor.fetchall()
-    columns = [column[0] for column in cursor.description]
+    query = "SELECT * FROM tags"
+    tags = fetch_query(query)
+    columns = ["id", "name"]
     tags = [dict(zip(columns, row)) for row in tags]
-    db.close_connection()
-    
-    # return tags
     return tags
 
 def update_tag_in_db(tag: Tag):
-    db = DatabaseConnection()
-    cursor = db.get_cursor()
-    cursor.execute(
-        "UPDATE tags SET name = ? WHERE id = ?",
-        (tag.name, tag.id_tag)
-    )
-    db.get_connection().commit()
-    db.close_connection()
-    
+    query = f"UPDATE tags SET name = '{tag.name}' WHERE id = {tag.id_tag}"
+    execute_query(query)
+
 def delete_tag(tag: Tag):
-    db = DatabaseConnection()
-    cursor = db.get_cursor()
-    cursor.execute(
-        "DELETE FROM tags WHERE id = ?",
-        (tag.id_tag,)
-    )
-    db.get_connection().commit()
-    db.close_connection()
-    
-def get_tags_by_design_id(id_design:int):
-    db = DatabaseConnection()
-    cursor = db.get_cursor()
-    cursor.execute(
-        """
+    query = f"DELETE FROM tags WHERE id = {tag.id_tag}"
+    execute_query(query)
+
+def get_tags_by_design_id(id_design: int):
+    query = f"""
         SELECT tags.id, tags.name
         FROM tag_design 
         JOIN tags ON tag_design.id_tag = tags.id
-        WHERE tag_design.id_design = ?
-        """,
-        (id_design,)
-    )
-    tags = cursor.fetchall()
-    # format the data to a list of dicts
-    columns = [column[0] for column in cursor.description]
+        WHERE tag_design.id_design = {id_design}
+    """
+    tags = fetch_query(query)
+    columns = ["id", "name"]
     tags = [dict(zip(columns, row)) for row in tags]
-    
-    
-    
-    db.close_connection()
     return tags
-    
-# designs
-def set_design(design: Design, list_of_tags_ids: list[int]):
-    db = DatabaseConnection()
-    cursor = db.get_cursor()
-    cursor.execute(
-        "INSERT INTO designs (name, img_url, ai_url) VALUES (?, ?, ?)",
-        (design.name, design.img_url, design.ai_url)
-    )
-    db.get_connection().commit()
-    design.id_design = cursor.lastrowid
-    
-    # set the tags related to the design
-    
-    for tag_id in list_of_tags_ids:
-        cursor.execute(
-            "INSERT INTO tag_design (id_tag,id_design) VALUES (?, ?)",
-            (tag_id, design.id_design)
-        )
-    db.get_connection().commit()
-    db.close_connection()
 
-def get_designs(google_sub:str = None):
-    # if the user is not logged in, return all the designs
-    
-    db = DatabaseConnection()
-    cursor = db.get_cursor()
-    cursor.execute("SELECT * FROM designs")
-    designs = cursor.fetchall()
-    columns = [column[0] for column in cursor.description]
+def set_design(design: Design, list_of_tags_ids: list[int]):
+    query = f"INSERT INTO designs (name, img_url, ai_url) VALUES ('{design.name}', '{design.img_url}', '{design.ai_url}')"
+    execute_query(query)
+    design.id_design = fetch_query("SELECT last_insert_rowid()")[0][0]
+    for tag_id in list_of_tags_ids:
+        query = f"INSERT INTO tag_design (id_tag, id_design) VALUES ({tag_id}, {design.id_design})"
+        execute_query(query)
+
+def get_designs(google_sub: str = None):
+    query = "SELECT * FROM designs"
+    designs = fetch_query(query)
+    columns = ["id", "name", "img_url", "ai_url"]
     designs = [dict(zip(columns, row)) for row in designs]
-    for design in designs:
-        design["tags"] = get_tags_by_design_id(design["id"])
-        
-    if google_sub != None:
-        # if the google sub is provided, get the favorite designs and the cart designs
-        favorite_designs = get_favorite_designs(google_sub)
-        cart_designs = get_cart_designs(google_sub)
-        
-        # for each design, if the id is in the favorite designs or in the cart designs, set the flag
-        for design in designs:
-            design["loved"] = design["id"] in [fav["id"] for fav in favorite_designs]
-            design["addedToCart"] = design["id"] in [cart["id"] for cart in cart_designs]
-            
-        
-    db.close_connection()
-    
     return designs
 
-def get_design_by_id(id_design:int, google_sub:str = None):
-    db = DatabaseConnection()
-    cursor = db.get_cursor()
-    cursor.execute(
-        "SELECT * FROM designs WHERE id = ?",
-        (id_design,)
-    )
-    design = cursor.fetchone()
-    # return a dict with the data
-    design_dict = dict(zip([column[0] for column in cursor.description], design))
-    # get also the tags
-    design_dict["tags"] = get_tags_by_design_id(id_design)
-    
-    if(google_sub != None):
-        # if the google sub is provided, get the favorite designs and the cart designs
-        favorite_designs = get_favorite_designs(google_sub)
-        cart_designs = get_cart_designs(google_sub)
-        
-        # set the flags
-        design_dict["loved"] = design_dict["id"] in [fav["id"] for fav in favorite_designs]
-        design_dict["addedToCart"] = design_dict["id"] in [cart["id"] for cart in cart_designs]
-    
-    db.close_connection()
-    return design_dict
+def get_design_by_id(id_design: int, google_sub: str = None):
+    query = f"SELECT * FROM designs WHERE id = {id_design}"
+    design = fetch_query(query)
+    if design:
+        design_dict = dict(zip(["id", "name", "img_url", "ai_url"], design[0]))
+        design_dict["tags"] = get_tags_by_design_id(id_design)
+        return design_dict
+    return None
 
-def delete_design(id_design:int):
-    db = DatabaseConnection()
-    cursor = db.get_cursor()
-    cursor.execute(
-        "DELETE FROM designs WHERE id = ?",
-        (id_design,)
-    )
-    db.get_connection().commit()
-    db.close_connection()
-    
-def update_design(design:Design, list_of_tags_ids:list[int]):
-    db = DatabaseConnection()
-    cursor = db.get_cursor()
-    cursor.execute(
-        "UPDATE designs SET name = ?, img_url = ?, ai_url = ? WHERE id = ?",
-        (design.name, design.img_url, design.ai_url, design.id_design)
-    )
-    db.get_connection().commit()
-    
-    # delete the old tags
-    cursor.execute(
-        "DELETE FROM tag_design WHERE id_design = ?",
-        (design.id_design,)
-    )
-    db.get_connection().commit()
-    
-    # set the new tags
-    if list_of_tags_ids == None or list_of_tags_ids == []:
-        # clear the tags
-        cursor.execute(
-            "DELETE FROM tag_design WHERE id_design = ?",
-            (design.id_design,)
-        )
-    else:
-        for tag_id in list_of_tags_ids:
-            cursor.execute(
-                "INSERT INTO tag_design (id_tag,id_design) VALUES (?, ?)",
-                (tag_id, design.id_design)
-            )
-        
-    
-    db.get_connection().commit()
-    db.close_connection()
-    
-#users
+def delete_design(id_design: int):
+    query = f"DELETE FROM designs WHERE id = {id_design}"
+    execute_query(query)
+
+def update_design(design: Design, list_of_tags_ids: list[int]):
+    query = f"UPDATE designs SET name = '{design.name}', img_url = '{design.img_url}', ai_url = '{design.ai_url}' WHERE id = {design.id_design}"
+    execute_query(query)
+    query = f"DELETE FROM tag_design WHERE id_design = {design.id_design}"
+    execute_query(query)
+    for tag_id in list_of_tags_ids:
+        query = f"INSERT INTO tag_design (id_tag, id_design) VALUES ({tag_id}, {design.id_design})"
+        execute_query(query)
+
 def get_users():
-    db = DatabaseConnection()
-    cursor = db.get_cursor()
-    cursor.execute("SELECT * FROM users")
-    users = cursor.fetchall()
-    columns = [column[0] for column in cursor.description]
+    query = "SELECT * FROM users"
+    users = fetch_query(query)
+    columns = ["google_sub", "name", "email", "phone", "img_url"]
     users = [dict(zip(columns, row)) for row in users]
-    db.close_connection()
     return users
 
-def delete_user(google_sub:str):
-    db = DatabaseConnection()
-    cursor = db.get_cursor()
-    cursor.execute(
-        "DELETE FROM users WHERE google_sub = ?",
-        (google_sub,)
-    )
-    db.get_connection().commit()
-    db.close_connection()
-    
-def update_user(user:User):
-    db = DatabaseConnection()
-    cursor = db.get_cursor()
-    cursor.execute(
-        "UPDATE users SET name = ?, email = ?, phone = ?, img_url = ? WHERE google_sub = ?",
-        (user.name, user.email, user.phone, user.img_url, user.google_sub)
-    )
-    db.get_connection().commit()
-    db.close_connection()
-    
-def set_new_user(user:User):
-    db = DatabaseConnection()
-    db.get_cursor().execute(
-        "INSERT INTO users (google_sub, name, email, phone, img_url) VALUES (?, ?, ?, ?, ?)",
-        (user.google_sub, user.name, user.email, user.phone, user.img_url)
-    )
-    db.get_connection().commit()
-    db.close_connection()
-    
+def delete_user(google_sub: str):
+    query = f"DELETE FROM users WHERE google_sub = '{google_sub}'"
+    execute_query(query)
+
+def update_user(user: User):
+    query = f"UPDATE users SET name = '{user.name}', email = '{user.email}', phone = '{user.phone}', img_url = '{user.img_url}' WHERE google_sub = '{user.google_sub}'"
+    execute_query(query)
+
+def set_new_user(user: User):
+    query = f"INSERT INTO users (google_sub, name, email, phone, img_url) VALUES ('{user.google_sub}', '{user.name}', '{user.email}', '{user.phone}', '{user.img_url}')"
+    execute_query(query)
+
 def import_db(source_path: str, destination_path: str):
     try:
-        shutil.copyfile(source_path, destination_path)
-        print("Database imported successfully.")
+        with open(source_path, 'rb') as f_src, open(destination_path, 'wb') as f_dst:
+            f_dst.write(f_src.read())
     except FileNotFoundError:
-        print("Source file not found.")
+        print("File not found.")
     except Exception as e:
-        print(f"An error occurred during database import: {str(e)}")
+        print(f"An error occurred: {e}")
 
 def export_db(source_path: str, destination_path: str):
     try:
-        
-        print("Database exported successfully.")
+        with open(source_path, 'rb') as f_src, open(destination_path, 'wb') as f_dst:
+            f_dst.write(f_src.read())
     except FileNotFoundError:
-        print("Destination directory not found.")
+        print("File not found.")
     except Exception as e:
-        print(f"An error occurred during database export: {str(e)}")
-        
-#  add number for one user
+        print(f"An error occurred: {e}")
+
 def add_or_reset_number_to_user(google_sub: str, number: str):
-    db = DatabaseConnection()
-    cursor = db.get_cursor()
-    cursor.execute(
-        """
-        UPDATE users
-        SET phone = ?
-        WHERE google_sub = ?
-        """,
-        (number, google_sub)
-    )
-    db.get_connection().commit()
-    db.close_connection()
-    
+    query = f"UPDATE users SET phone = '{number}' WHERE google_sub = '{google_sub}'"
+    execute_query(query)
+
 def delete_number_to_user(google_sub: str):
-    db = DatabaseConnection()
-    cursor = db.get_cursor()
-    cursor.execute(
-        """
-        UPDATE users
-        SET phone = NULL
-        WHERE google_sub = ?
-        """,
-        (google_sub,)
-    )
-    db.get_connection().commit()
-    db.close_connection()
- 
-# favorite designs crud
+    query = f"UPDATE users SET phone = NULL WHERE google_sub = '{google_sub}'"
+    execute_query(query)
+
 def add_design_to_favorite(user_sub: str, design_id: int):
-    db = DatabaseConnection()
-    cursor = db.get_cursor()
-    # if doesn't exist, add the user to the db
-    
-    cursor.execute(
-        """
-        INSERT INTO favorite_list_design (id_user, id_designs)
-        SELECT ?, ?
-        WHERE NOT EXISTS (
-            SELECT 1 FROM favorite_list_design WHERE id_user = ? AND id_designs = ?
-        )
-        """,
-        (user_sub, design_id, user_sub, design_id)
-    )
-    
-    db.get_connection().commit()
-    db.close_connection()
+    query = f"INSERT INTO favorite_list_design (id_user, id_designs) VALUES ('{user_sub}', {design_id})"
+    execute_query(query)
 
 def remove_design_from_favorite(user_sub: str, design_id: int):
-    db = DatabaseConnection()
-    cursor = db.get_cursor()
-    cursor.execute(
-        """
-        DELETE FROM favorite_list_design
-        WHERE id_user = ? AND id_designs = ?
-        """,
-        (user_sub, design_id)
-    )
-    db.get_connection().commit()
-    db.close_connection()
+    query = f"DELETE FROM favorite_list_design WHERE id_user = '{user_sub}' AND id_designs = {design_id}"
+    execute_query(query)
 
 def get_favorite_designs(user_sub: str):
-    db = DatabaseConnection()
-    cursor = db.get_cursor()
-    cursor.execute(
-        """
-        SELECT designs.*
-        FROM favorite_list_design
-        JOIN designs ON favorite_list_design.id_designs = designs.id
-        WHERE favorite_list_design.id_user = ?
-        """,
-        (user_sub,)
-    )
-    designs = cursor.fetchall()
-    columns = [column[0] for column in cursor.description]
-    designs = [dict(zip(columns, row)) for row in designs]
-    for design in designs: design["tags"] = get_tags_by_design_id(design["id"])
-    db.close_connection()
-    return designs
+    query = f"SELECT * FROM favorite_list_design WHERE id_user = '{user_sub}'"
+    favorite_designs = fetch_query(query)
+    columns = ["id", "id_user", "id_designs"]
+    favorite_designs = [dict(zip(columns, row)) for row in favorite_designs]
+    return favorite_designs
 
-# cart designs crud
 def add_design_to_cart(user_sub: str, design_id: int):
-    db = DatabaseConnection()
-    cursor = db.get_cursor()
-    cursor.execute(
-        """
-        INSERT INTO cart_design (id_user, id_designs)
-        SELECT ?, ?
-        WHERE NOT EXISTS (
-            SELECT 1 FROM cart_design WHERE id_user = ? AND id_designs = ?
-        )
-        """,
-        (user_sub, design_id, user_sub, design_id)
-    )
-    db.get_connection().commit()
-    db.close_connection()
+    query = f"INSERT INTO cart_design (id_user, id_designs) VALUES ('{user_sub}', {design_id})"
+    execute_query(query)
 
 def remove_design_from_cart(user_sub: str, design_id: int):
-    db = DatabaseConnection()
-    cursor = db.get_cursor()
-    cursor.execute(
-        """
-        DELETE FROM cart_design
-        WHERE id_user = ? AND id_designs = ?
-        """,
-        (user_sub, design_id)
-    )
-    db.get_connection().commit()
-    db.close_connection()
+    query = f"DELETE FROM cart_design WHERE id_user = '{user_sub}' AND id_designs = {design_id}"
+    execute_query(query)
 
 def get_cart_designs(user_sub: str):
-    db = DatabaseConnection()
-    cursor = db.get_cursor()
-    cursor.execute(
-        """
-        SELECT designs.*
-        FROM cart_design
-        JOIN designs ON cart_design.id_designs = designs.id
-        WHERE cart_design.id_user = ?
-        """,
-        (user_sub,)
-    )
-    designs = cursor.fetchall()
-    columns = [column[0] for column in cursor.description]
-    designs = [dict(zip(columns, row)) for row in designs]
-    for design in designs: design["tags"] = get_tags_by_design_id(design["id"])
-    db.close_connection()
-    return designs
+    query = f"SELECT * FROM cart_design WHERE id_user = '{user_sub}'"
+    cart_designs = fetch_query(query)
+    columns = ["id", "id_user", "id_designs"]
+    cart_designs = [dict(zip(columns, row)) for row in cart_designs]
+    return cart_designs
 
-
-#extra info crud
 def set_extra_info(name: str, value: str):
-    db = DatabaseConnection()
-    cursor = db.get_cursor()
-    cursor.execute(
-        """INSERT INTO extra_info (name, value) VALUES (?, ?)""",
-        (name, value)
-    )
-    db.get_connection().commit()
-    db.close_connection()
+    query = f"INSERT INTO extra_info (name, value) VALUES ('{name}', '{value}')"
+    execute_query(query)
 
 def get_extra_info(name: str):
-    db = DatabaseConnection()
-    cursor = db.get_cursor()
-    cursor.execute(
-        """SELECT * FROM extra_info WHERE name = ?""",
-        (name,)
-    )
-    extra_info = cursor.fetchone()
-    extra_info = dict(zip([column[0] for column in cursor.description], extra_info))
-    db.close_connection()
-    return extra_info
+    query = f"SELECT * FROM extra_info WHERE name = '{name}'"
+    extra_info = fetch_query(query)
+    return extra_info[0] if extra_info else None
 
 def get_all_extra_info():
-    db = DatabaseConnection()
-    cursor = db.get_cursor()
-    cursor.execute("SELECT * FROM extra_info")
-    extra_info = cursor.fetchall()
-    columns = [column[0] for column in cursor.description]
+    query = "SELECT * FROM extra_info"
+    extra_info = fetch_query(query)
+    columns = ["name", "value"]
     extra_info = [dict(zip(columns, row)) for row in extra_info]
-    db.close_connection()
     return extra_info
 
 def update_extra_info(name: str, value: str):
-    db = DatabaseConnection()
-    cursor = db.get_cursor()
-    cursor.execute(
-        """UPDATE extra_info SET value = ? WHERE name = ?""",
-        (value, name)
-    )
-    db.get_connection().commit()
-    db.close_connection()
+    query = f"UPDATE extra_info SET value = '{value}' WHERE name = '{name}'"
+    execute_query(query)
 
 def delete_extra_info(name: str):
-    db = DatabaseConnection()
-    cursor = db.get_cursor()
-    cursor.execute(
-        """DELETE FROM extra_info WHERE name = ?"""     ,
-        (name,)
-    )
-    db.get_connection().commit()
-    db.close_connection()
+    query = f"DELETE FROM extra_info WHERE name = '{name}'"
+    execute_query(query)
