@@ -7,7 +7,7 @@ load_dotenv()
 turso_url = "libsql://memorabledb-jjhbotache.turso.io"
 
 # Obtener el token de la variable de entorno
-turso_token = "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3MjI2NDA3MDcsImlkIjoiNjhhYzg3M2MtNmYxZC00OTU4LTg4ZTItNDdjNzliNmQwNGZiIn0.mxbmBDsiG7cjsvPRxbJBSMi8EefjccTI802B0BJ-e9f-wI3iO7icdaamF-qloMbAfdj7RNC33w8M6LPJWUJEBg"
+turso_token = os.getenv("DB_TOKEN")
 
 local_db_name = "local.db"
 conn = None
