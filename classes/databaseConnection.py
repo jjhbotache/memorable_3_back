@@ -80,33 +80,4 @@ def create_tables():
                 FOREIGN KEY (id_design) REFERENCES designs(id) ON DELETE CASCADE
             )
         """)
-        
-        # Extra info table
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS extra_info (
-                name TEXT NOT NULL,
-                value TEXT
-            )
-        """)
-        
-        conn.commit()
-        print("Tables created successfully")
-
-def execute_query(query):
-    conn.execute(query)
-    conn.commit()
     
-def fetch_query(query):
-    cursor = conn.execute(query)
-    return cursor.fetchall()
-
-
-def import_db(new_db_path):
-    global conn
-    if os.path.exists(new_db_path):
-        shutil.copy(new_db_path, local_db_name)
-        conn = libsql.connect(local_db_name, sync_url=turso_url, auth_token=turso_token)
-    else:
-        print(f"El archivo {new_db_path} no existe.")
-connect()
-create_tables()

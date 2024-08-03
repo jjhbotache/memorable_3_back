@@ -165,32 +165,20 @@ def remove_design_from_cart(user_sub: str, design_id: int):
     execute_query(query)
 
 def get_cart_designs(user_sub: str):
-    query = f"SELECT * FROM cart_design WHERE id_user = '{user_sub}'"
-    cart_designs = fetch_query(query)
-    columns = ["id", "id_user", "id_designs"]
-    cart_designs = [dict(zip(columns, row)) for row in cart_designs]
-    return cart_designs
-
-def set_extra_info(name: str, value: str):
-    query = f"INSERT INTO extra_info (name, value) VALUES ('{name}', '{value}')"
-    execute_query(query)
-
-def get_extra_info(name: str):
-    query = f"SELECT * FROM extra_info WHERE name = '{name}'"
-    extra_info = fetch_query(query)
-    return extra_info[0] if extra_info else None
-
-def get_all_extra_info():
-    query = "SELECT * FROM extra_info"
-    extra_info = fetch_query(query)
-    columns = ["name", "value"]
-    extra_info = [dict(zip(columns, row)) for row in extra_info]
-    return extra_info
-
-def update_extra_info(name: str, value: str):
-    query = f"UPDATE extra_info SET value = '{value}' WHERE name = '{name}'"
-    execute_query(query)
-
-def delete_extra_info(name: str):
-    query = f"DELETE FROM extra_info WHERE name = '{name}'"
-    execute_query(query)
+    db = DatabaseConnection()
+    cursor = db.get_cursor()
+    cursor.execute(
+        """
+        SELECT designs.*
+        FROM cart_design
+        JOIN designs ON cart_design.id_designs = designs.id
+        WHERE cart_design.id_user = ?
+        """,
+        (user_sub,)
+    )
+    designs = cursor.fetchall()
+    columns = [column[0] for column in cursor.description]
+    designs = [dict(zip(columns, row)) for row in designs]
+    for design in designs: design["tags"] = get_tags_by_design_id(design["id"])
+    db.close_connection()
+    return designs

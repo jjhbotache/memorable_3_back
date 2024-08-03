@@ -276,6 +276,7 @@ def get_users(request:Request):
     return responses.JSONResponse(content=users)
 
 @app.delete("/user/delete/{google_sub}")
+@admin_only
 def delete_user(google_sub:str,request:Request):
     db.delete_user(google_sub)
     return responses.JSONResponse(content={"status":"ok"})
