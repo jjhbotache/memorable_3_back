@@ -114,17 +114,39 @@ def set_design(design: Design, list_of_tags_ids: list[int]):
 def get_designs(google_sub: str = None):
     db = DatabaseConnection()
     cursor = db.get_cursor()
-    cursor.execute("SELECT * FROM designs")
-    designs = cursor.fetchall()
+    
+    query = """
+    SELECT 
+        d.*,
+        COALESCE(json_agg(DISTINCT jsonb_build_object('id', t.id, 'name', t.name)) FILTER (WHERE t.id IS NOT NULL), '[]') AS tags,
+        CASE 
+            WHEN %(google_sub)s IS NOT NULL THEN 
+                COALESCE(bool_or(f.id IS NOT NULL), FALSE)
+            ELSE FALSE
+        END AS is_favorite,
+        CASE 
+            WHEN %(google_sub)s IS NOT NULL THEN 
+                COALESCE(bool_or(c.id IS NOT NULL), FALSE)
+            ELSE FALSE
+        END AS in_cart
+    FROM 
+        designs d
+    LEFT JOIN 
+        tag_design dt ON d.id = dt.id_design
+    LEFT JOIN 
+        tags t ON dt.id_tag = t.id
+    LEFT JOIN 
+        favorite_list_design f ON d.id = f.id_designs AND f.id_user = %(google_sub)s
+    LEFT JOIN 
+        cart_design c ON d.id = c.id_designs AND c.id_user = %(google_sub)s
+    GROUP BY 
+        d.id
+    """
+    
+    cursor.execute(query, {'google_sub': google_sub})
     columns = [column[0] for column in cursor.description]
-    designs = [dict(zip(columns, row)) for row in designs]
-    for design in designs:
-        design["tags"] = get_tags_by_design_id(design["id"])
-        
-    if google_sub is not None:
-        # if the google sub is provided, get the favorite designs and the cart designs
-        pass
-        
+    designs = [dict(zip(columns, row)) for row in cursor.fetchall()]
+
     db.close_connection()
     return designs
 
