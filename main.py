@@ -135,7 +135,7 @@ def get_designs_AI(searched_text:str):
 @app.get("/designs/public")
 def get_designs_public(request:Request):
     # if the google_sub is in the headers, return the designs with loved and addedToCart
-    google_sub = request.headers["google_sub"]
+    google_sub = request.headers["google_sub"] if "google_sub" in request.headers else None
     designs = db.get_designs(google_sub)
     # for each design, remove the ai_url
     for design in designs:
@@ -310,24 +310,35 @@ def verify_admin(request:Request):
 @app.get("/db/export")
 @admin_only
 def export_db(request: Request):
+    path_to_exported_db_file = "db_sql_dump.sql"
+    
     # Export the database and save it to a file
-    db.export_db(
-        source_path=DatabaseConnection.database_name,
-        destination_path= (path_to_exported_db_file:=os.path.join(os.getcwd(),"temp", "exported_db.db"))
-    )
+    db = DatabaseConnection()
+    db.export_db(path_to_exported_db_file)
     
     
     # Return the exported database file as a response
-    return FileResponse(path_to_exported_db_file, filename="database.db")
+    return FileResponse(path_to_exported_db_file, filename="exported_sql_database.sql")
 
 @app.post("/db/import")
 @admin_only
 def import_db(request: Request, db_file: UploadFile = File(...)):
-    # overwrite the current database with the uploaded file
-    with open(DatabaseConnection.database_name, "wb") as f:
-        f.write(db_file.file.read())    
+    path_to_exported_db_file = "db_sql_dump.sql"
+    path_to_imported_db_file = "db_sql_imported.sql"
     
-    return responses.JSONResponse(content={"status":"ok"})
+    # Export the database and save it to a file
+    db = DatabaseConnection()
+    db.export_db(path_to_exported_db_file)
+    
+    # temporary save the file of the request
+    with open(path_to_imported_db_file, "wb") as f:
+        f.write(db_file.file.read())
+        
+    db.import_db(path_to_imported_db_file)
+    
+    
+    # Return the exported database file as a response
+    return FileResponse(path_to_exported_db_file, filename="old_db_sql.sql")
     
 # favorite designs crud
 # Add a design to the favorite list
