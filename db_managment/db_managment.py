@@ -1,7 +1,7 @@
 from classes.user import User
 from classes.design import Design
 from classes.tag import Tag
-from classes.databaseConnection import execute_query, fetch_query, local_db_name
+from classes.databaseConnection import DatabaseConnection, execute_query, fetch_query, local_db_name
 
 def get_user_by_google_sub(google_sub: str):
     query = f"SELECT * FROM users WHERE google_sub = '{google_sub}'"
