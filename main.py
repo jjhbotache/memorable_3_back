@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, Form, HTTPException,responses,Request,UploadFile
+from fastapi import FastAPI, File, Form,responses,Request,UploadFile
 from AI.ai_search import search_designs_with_ai
 from classes.design import Design
 from classes.favorite_and_cart_classes_request import CrudFavoriteAndCartDesignRequest
@@ -6,7 +6,7 @@ from classes.send_whats_classes import ConfirmWhatsRequest, SendWhatsImgRequest,
 from classes.tag import Tag
 from classes.user import User
 from classes.SendEmailClass import SendEmailClass
-from classes.databaseConnection import local_db_name,import_db
+from classes.databaseConnection import DatabaseConnection 
 from db_managment import db_managment as db
 from fastapi.middleware.cors import CORSMiddleware
 import os
@@ -18,11 +18,10 @@ from constants import list_of_google_sub_admins
 from functools import wraps
 from cloudinary_manager.cloudinary_manager import delete_file_on_cloudinary, upload_ai,upload_desing 
 from fastapi.responses import FileResponse
-import shutil
+
 from whatsapp_bot.token_crud import create_token, delete_token, read_token, update_token
 from whatsapp_bot.whatsapp_bot_functions import confirm_buyment, send_whats_img, send_whats_msg
 
-from db_managment import db_managment as db_tools
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -51,7 +50,8 @@ def admin_only(func):
 
 @app.get("/")
 def read_root():
-    # connect and disconnect from db
+    db = DatabaseConnection()
+    db.create_tables()
     return {"Hello": "World"}
  
 @app.post("/user-login-signup")
@@ -276,7 +276,6 @@ def get_users(request:Request):
     return responses.JSONResponse(content=users)
 
 @app.delete("/user/delete/{google_sub}")
-@admin_only
 def delete_user(google_sub:str,request:Request):
     db.delete_user(google_sub)
     return responses.JSONResponse(content={"status":"ok"})
@@ -308,26 +307,28 @@ def verify_admin(request:Request):
 
 
 
-
 @app.get("/db/export")
 @admin_only
 def export_db(request: Request):
-    filename = "database.db"
-    shutil.copy(local_db_name, filename)
-    print(f"Base de datos exportada como {filename}")
-    return FileResponse(filename, filename=filename)
+    # Export the database and save it to a file
+    db.export_db(
+        source_path=DatabaseConnection.database_name,
+        destination_path= (path_to_exported_db_file:=os.path.join(os.getcwd(),"temp", "exported_db.db"))
+    )
+    
+    
+    # Return the exported database file as a response
+    return FileResponse(path_to_exported_db_file, filename="database.db")
 
 @app.post("/db/import")
 @admin_only
-def import_db_route(request: Request, db_file: UploadFile = File(...)):
-    global conn
-    filename = "uploaded_database.db"
+def import_db(request: Request, db_file: UploadFile = File(...)):
+    # overwrite the current database with the uploaded file
+    with open(DatabaseConnection.database_name, "wb") as f:
+        f.write(db_file.file.read())    
     
-    with open(filename, "wb") as f:
-        f.write(db_file.file.read())
-        
-    import_db(filename)
-    return responses.JSONResponse(content={"status": "ok"})
+    return responses.JSONResponse(content={"status":"ok"})
+    
 # favorite designs crud
 # Add a design to the favorite list
 @app.post("/favorite/add")
@@ -459,5 +460,4 @@ def delete_token_route(request: Request):
         return responses.JSONResponse(content={"status": "Token deleted"})
     else:
         return responses.JSONResponse(content={"status": "Token not found"})
-
 

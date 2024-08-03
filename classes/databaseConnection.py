@@ -1,9 +1,9 @@
-import sqlite3
+import os
+import psycopg2
 import threading
 
 class DatabaseConnection:
     _instance = None
-    database_name = 'data.db'
     _connection_holder = threading.local()
 
     def __new__(cls):
@@ -13,7 +13,13 @@ class DatabaseConnection:
 
     def get_connection(self):
         if not hasattr(self._connection_holder, "connection"):
-            self._connection_holder.connection = sqlite3.connect(self.database_name, check_same_thread=False)
+            self._connection_holder.connection = psycopg2.connect(
+                host=os.getenv("PG_HOST", "dpg-cqmro6lsvqrc73femdb0-a.oregon-postgres.render.com"),
+                dbname=os.getenv("PG_DBNAME", "memorable_db_tmxo"),
+                user=os.getenv("PG_USER", "juan"),
+                password=os.getenv("PG_PASSWORD", "AwGtkXpRBKYwpJRNhkHDMfsG7tbBzb8T")
+            )
+            
         return self._connection_holder.connection
 
     def get_cursor(self):
@@ -26,8 +32,8 @@ class DatabaseConnection:
             del self._connection_holder.connection
         
     def create_tables(self):
-    # create the tables
-        self.get_cursor.execute("""
+        cursor = self.get_cursor()
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 google_sub TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
@@ -36,51 +42,56 @@ class DatabaseConnection:
                 img_url TEXT
             );
         """)
-        self.get_cursor.execute("""
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS designs (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id SERIAL PRIMARY KEY,
                 name TEXT NOT NULL,
                 img_url TEXT,
                 ai_url TEXT
             );
         """)
-        self.get_cursor.execute("""
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS tags (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id SERIAL PRIMARY KEY,
                 name TEXT NOT NULL
             );
         """)
-        self.get_cursor.execute("""
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS cart_design (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id SERIAL PRIMARY KEY,
                 id_user TEXT,
                 id_designs INTEGER,
                 FOREIGN KEY (id_user) REFERENCES users(google_sub) ON DELETE CASCADE,
                 FOREIGN KEY (id_designs) REFERENCES designs(id) ON DELETE CASCADE
             );
         """)
-        self.get_cursor.execute("""
+        cursor.execute("""
+            ALTER TABLE cart_design
+            ADD CONSTRAINT fk_cart_design_users
+            FOREIGN KEY (id_user) REFERENCES users(google_sub) ON DELETE CASCADE;
+        """)
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS favorite_list_design (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id SERIAL PRIMARY KEY,
                 id_user TEXT,
                 id_designs INTEGER,
                 FOREIGN KEY (id_user) REFERENCES users(google_sub) ON DELETE CASCADE,
                 FOREIGN KEY (id_designs) REFERENCES designs(id) ON DELETE CASCADE
             );
         """)
-        self.get_cursor.execute("""
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS tag_design (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id SERIAL PRIMARY KEY,
                 id_tag INTEGER,
                 id_design INTEGER,
                 FOREIGN KEY (id_tag) REFERENCES tags(id) ON DELETE CASCADE,
                 FOREIGN KEY (id_design) REFERENCES designs(id) ON DELETE CASCADE
             );
         """)
-        
-        self.get_cursor().execute("""
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS extra_info (
                 name TEXT NOT NULL,
                 value TEXT
             );
         """)
+        self.get_connection().commit()
