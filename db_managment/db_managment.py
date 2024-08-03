@@ -59,6 +59,19 @@ def get_designs(google_sub: str = None):
     designs = fetch_query(query)
     columns = ["id", "name", "img_url", "ai_url"]
     designs = [dict(zip(columns, row)) for row in designs]
+    for design in designs:
+        design["tags"] = get_tags_by_design_id(design["id"])
+    
+    if google_sub != None:
+        # if the google sub is provided, get the favorite designs and the cart designs
+        favorite_designs = get_favorite_designs(google_sub)
+        cart_designs = get_cart_designs(google_sub)
+        
+        # for each design, if the id is in the favorite designs or in the cart designs, set the flag
+        for design in designs:
+            design["loved"] = design["id"] in [fav["id"] for fav in favorite_designs]
+            design["addedToCart"] = design["id"] in [cart["id"] for cart in cart_designs]
+    
     return designs
 
 def get_design_by_id(id_design: int, google_sub: str = None):

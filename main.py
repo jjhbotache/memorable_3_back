@@ -35,7 +35,6 @@ app.add_middleware(
 def admin_only(func):
     @wraps(func) # this is to keep the original function name and info
     def new_func(*args,**kwargs):
-        return func(*args,**kwargs) #to debug
         real_list_of_google_sub_admins = [ decrypt_message(admin) for admin in list_of_google_sub_admins]
         request:Request = kwargs["request"]
         google_sub = request.headers["google_sub"]
