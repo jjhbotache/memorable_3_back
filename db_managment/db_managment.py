@@ -32,16 +32,31 @@ def get_img_urls():
 
 # tags
 def set_tag(tag: Tag):
+    # Crear una conexión a la base de datos
     db = DatabaseConnection()
+    
+    # Obtener el cursor
     cursor = db.get_cursor()
-    cursor.execute(
-        "INSERT INTO tags (name) VALUES (%s)",
-        (tag.name,)
-    )
+    
+    # Definir la consulta de inserción con RETURNING
+    insert_query = """
+    INSERT INTO tags (name) VALUES (%s) RETURNING id;
+    """
+    
+    # Ejecutar la consulta de inserción
+    cursor.execute(insert_query, (tag.name,))
+    
+    # Obtener el ID de la inserción
+    tag.id_tag = cursor.fetchone()[0]
+    
+    # Confirmar los cambios
     db.get_connection().commit()
-    tag.id_tag = cursor.lastrowid
+    
+    # Cerrar la conexión a la base de datos
     db.close_connection()
+    
     return tag
+
 
 def get_tags_from_db():
     db = DatabaseConnection()
@@ -96,18 +111,31 @@ def get_tags_by_design_id(id_design: int):
 def set_design(design: Design, list_of_tags_ids: list[int]):
     db = DatabaseConnection()
     cursor = db.get_cursor()
-    cursor.execute(
-        "INSERT INTO designs (name, img_url, ai_url) VALUES (%s, %s, %s)",
-        (design.name, design.img_url, design.ai_url)
-    )
+
+    # Definir la consulta de inserción con RETURNING
+    insert_query = """
+    INSERT INTO designs (name, img_url, ai_url)
+    VALUES (%s, %s, %s)
+    RETURNING id;
+    """
+
+    # Ejecutar la consulta de inserción
+    cursor.execute(insert_query, (design.name, design.img_url, design.ai_url))
+
+    # Obtener el ID de la inserción
+    design.id_design = cursor.fetchone()[0]
+
+    # Confirmar los cambios
     db.get_connection().commit()
-    design.id_design = cursor.lastrowid
-    
+
+    # Insertar en la tabla tag_design
     for tag_id in list_of_tags_ids:
         cursor.execute(
             "INSERT INTO tag_design (id_tag, id_design) VALUES (%s, %s)",
             (tag_id, design.id_design)
         )
+
+    # Confirmar los cambios
     db.get_connection().commit()
     db.close_connection()
 

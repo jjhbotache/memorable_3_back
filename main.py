@@ -181,17 +181,12 @@ def create_design(
     img_path = "./temp/"+name+".png"
     with open(ai_path,"wb") as f: f.write(ai.file.read())
     with open(img_path,"wb") as f: f.write(img.file.read())
-    # compress the AI file
-    
-    # await compress_to_gzip(ai_path, "./temp/")
-    # os.remove(ai_path)
-    
     
     # send the files to cloudinary
     ai_url = upload_ai(os.path.join(current_dir,"temp",name+".ai"))
     img_url = upload_desing(os.path.join(current_dir,"temp",name+".png"))
     
-    # delete the compressed version of the AI
+    # delete the files
     os.remove(ai_path)
     os.remove(img_path)
     
