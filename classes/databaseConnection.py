@@ -14,10 +14,10 @@ class DatabaseConnection:
     def get_connection(self):
         if not hasattr(self._connection_holder, "connection"):
             self._connection_holder.connection = psycopg2.connect(
-                host=os.getenv("PG_HOST", "dpg-cqmro6lsvqrc73femdb0-a.oregon-postgres.render.com"),
-                dbname=os.getenv("PG_DBNAME", "memorable_db_tmxo"),
-                user=os.getenv("PG_USER", "juan"),
-                password=os.getenv("PG_PASSWORD", "AwGtkXpRBKYwpJRNhkHDMfsG7tbBzb8T")
+                host=os.getenv("PG_HOST"),
+                dbname=os.getenv("PG_DBNAME"),
+                user=os.getenv("PG_USER"),
+                password=os.getenv("PG_PASSWORD")
             )
             
         return self._connection_holder.connection

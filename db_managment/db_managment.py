@@ -123,12 +123,12 @@ def get_designs(google_sub: str = None):
             WHEN %(google_sub)s IS NOT NULL THEN 
                 COALESCE(bool_or(f.id IS NOT NULL), FALSE)
             ELSE FALSE
-        END AS is_favorite,
+        END AS loved,
         CASE 
             WHEN %(google_sub)s IS NOT NULL THEN 
                 COALESCE(bool_or(c.id IS NOT NULL), FALSE)
             ELSE FALSE
-        END AS in_cart
+        END AS addedToCart
     FROM 
         designs d
     LEFT JOIN 
