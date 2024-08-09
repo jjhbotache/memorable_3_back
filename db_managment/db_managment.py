@@ -112,15 +112,19 @@ def set_design(design: Design, list_of_tags_ids: list[int]):
     db = DatabaseConnection()
     cursor = db.get_cursor()
 
+    query = f"SELECT MAX(id) AS max_id FROM designs;"
+    cursor.execute(query)
+    id_to_use = int(cursor.fetchone())
+
     # Definir la consulta de inserción con RETURNING
     insert_query = """
-    INSERT INTO designs (name, img_url, ai_url)
-    VALUES (%s, %s, %s)
+    INSERT INTO designs (id,name, img_url, ai_url)
+    VALUES (%s,%s, %s, %s)
     RETURNING id;
     """
 
     # Ejecutar la consulta de inserción
-    cursor.execute(insert_query, (design.name, design.img_url, design.ai_url))
+    cursor.execute(insert_query, (id_to_use,design.name, design.img_url, design.ai_url))
 
     # Obtener el ID de la inserción
     design.id_design = cursor.fetchone()[0]
