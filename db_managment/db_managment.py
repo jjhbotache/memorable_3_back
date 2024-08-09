@@ -114,7 +114,7 @@ def set_design(design: Design, list_of_tags_ids: list[int]):
 
     query = f"SELECT MAX(id) AS max_id FROM designs;"
     cursor.execute(query)
-    id_to_use = int(cursor.fetchone()[0])
+    id_to_use = int(cursor.fetchone()[0])+1
 
     # Definir la consulta de inserción con RETURNING
     insert_query = """
