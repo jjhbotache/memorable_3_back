@@ -108,10 +108,10 @@ class DatabaseConnection:
                 cursor.execute(f"SELECT * FROM {table_name}")
                 rows = cursor.fetchall()
                 for row in rows:
-                    insert_row = f"INSERT INTO {table_name} VALUES ({', '.join(
+                    insert_row = f"""INSERT INTO {table_name} VALUES ({', '.join(
                         [ "'"+val.replace("'","''")+"'" if isinstance(val, str) else str(val).replace('None', 'NULL')
                         for val in row]
-                        )});\n"
+                        )});\n"""
                     export_sql += insert_row
                 export_sql += "\n"
     
