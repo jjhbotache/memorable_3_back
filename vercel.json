@@ -1,5 +1,4 @@
 {
-  "version": 2,
   "builds": [
     {
       "src": "main.py",
@@ -11,13 +10,5 @@
       "src": "/(.*)",
       "dest": "main.py"
     }
-  ],
-  "build": {
-    "env": {
-      "PATH": "$PATH:$HOME/.cargo/bin"
-    }
-  },
-  "scripts": {
-    "build": "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && source $HOME/.cargo/env && vercel build"
-  }
+  ]
 }
