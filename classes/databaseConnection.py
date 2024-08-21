@@ -2,11 +2,61 @@ import os
 import psycopg2
 import threading
 import dotenv
+import re
 dotenv.load_dotenv()
 
 class DatabaseConnection:
     _instance = None
     _connection_holder = threading.local()
+    
+    create_tables_sql = """
+            CREATE TABLE IF NOT EXISTS users (
+                google_sub TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                email TEXT NOT NULL,
+                phone TEXT,
+                img_url TEXT
+            );
+            CREATE TABLE IF NOT EXISTS designs (
+                id SERIAL PRIMARY KEY,
+                name TEXT NOT NULL,
+                img_url TEXT,
+                ai_url TEXT
+            );
+            CREATE TABLE IF NOT EXISTS tags (
+                id SERIAL PRIMARY KEY,
+                name TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS cart_design (
+                id SERIAL PRIMARY KEY,
+                id_user TEXT,
+                id_designs INTEGER,
+                FOREIGN KEY (id_user) REFERENCES users(google_sub) ON DELETE CASCADE,
+                FOREIGN KEY (id_designs) REFERENCES designs(id) ON DELETE CASCADE
+            );
+            ALTER TABLE cart_design
+            ADD CONSTRAINT fk_cart_design_users
+            FOREIGN KEY (id_user) REFERENCES users(google_sub) ON DELETE CASCADE;
+            CREATE TABLE IF NOT EXISTS favorite_list_design (
+                id SERIAL PRIMARY KEY,
+                id_user TEXT,
+                id_designs INTEGER,
+                FOREIGN KEY (id_user) REFERENCES users(google_sub) ON DELETE CASCADE,
+                FOREIGN KEY (id_designs) REFERENCES designs(id) ON DELETE CASCADE
+            );
+            CREATE TABLE IF NOT EXISTS tag_design (
+                id SERIAL PRIMARY KEY,
+                id_tag INTEGER,
+                id_design INTEGER,
+                FOREIGN KEY (id_tag) REFERENCES tags(id) ON DELETE CASCADE,
+                FOREIGN KEY (id_design) REFERENCES designs(id) ON DELETE CASCADE
+            );
+            CREATE TABLE IF NOT EXISTS extra_info (
+                name TEXT NOT NULL,
+                value TEXT
+            );
+        """
+
 
     def __new__(cls):
         if cls._instance is None:
@@ -15,12 +65,7 @@ class DatabaseConnection:
 
     def get_connection(self):
         if not hasattr(self._connection_holder, "connection"):
-            self._connection_holder.connection = psycopg2.connect(
-                host=os.getenv("PG_HOST"),
-                dbname=os.getenv("PG_DBNAME"),
-                user=os.getenv("PG_USER"),
-                password=os.getenv("PG_PASSWORD")
-            )
+            self._connection_holder.connection = psycopg2.connect(os.getenv("PG_URL"))
             
         return self._connection_holder.connection
 
@@ -35,67 +80,8 @@ class DatabaseConnection:
         
     def create_tables(self):
         cursor = self.get_cursor()
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-                google_sub TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                email TEXT NOT NULL,
-                phone TEXT,
-                img_url TEXT
-            );
-        """)
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS designs (
-                id SERIAL PRIMARY KEY,
-                name TEXT NOT NULL,
-                img_url TEXT,
-                ai_url TEXT
-            );
-        """)
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS tags (
-                id SERIAL PRIMARY KEY,
-                name TEXT NOT NULL
-            );
-        """)
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS cart_design (
-                id SERIAL PRIMARY KEY,
-                id_user TEXT,
-                id_designs INTEGER,
-                FOREIGN KEY (id_user) REFERENCES users(google_sub) ON DELETE CASCADE,
-                FOREIGN KEY (id_designs) REFERENCES designs(id) ON DELETE CASCADE
-            );
-        """)
-        cursor.execute("""
-            ALTER TABLE cart_design
-            ADD CONSTRAINT fk_cart_design_users
-            FOREIGN KEY (id_user) REFERENCES users(google_sub) ON DELETE CASCADE;
-        """)
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS favorite_list_design (
-                id SERIAL PRIMARY KEY,
-                id_user TEXT,
-                id_designs INTEGER,
-                FOREIGN KEY (id_user) REFERENCES users(google_sub) ON DELETE CASCADE,
-                FOREIGN KEY (id_designs) REFERENCES designs(id) ON DELETE CASCADE
-            );
-        """)
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS tag_design (
-                id SERIAL PRIMARY KEY,
-                id_tag INTEGER,
-                id_design INTEGER,
-                FOREIGN KEY (id_tag) REFERENCES tags(id) ON DELETE CASCADE,
-                FOREIGN KEY (id_design) REFERENCES designs(id) ON DELETE CASCADE
-            );
-        """)
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS extra_info (
-                name TEXT NOT NULL,
-                value TEXT
-            );
-        """)
+        
+        cursor.execute(DatabaseConnection.create_tables_sql)
         self.get_connection().commit()
         
     def export_db(self, filename):
@@ -105,26 +91,32 @@ class DatabaseConnection:
             # Obtener todas las tablas
             cursor.execute("SELECT table_name FROM information_schema.tables WHERE table_schema='public'")
             tables = cursor.fetchall()
-
+    
+            export_sql = DatabaseConnection.create_tables_sql + "\n"
+    
+            # Expresión regular para encontrar los nombres de las tablas
+            table_name_pattern = re.compile(r'CREATE TABLE IF NOT EXISTS (\w+)')
+            
+            # Buscar todos los nombres de las tablas
+            table_names = table_name_pattern.findall(DatabaseConnection.create_tables_sql)
+            
+    
+            for table_name in table_names:
+    
+    
+                # Obtener los datos de la tabla
+                cursor.execute(f"SELECT * FROM {table_name}")
+                rows = cursor.fetchall()
+                for row in rows:
+                    insert_row = f"INSERT INTO {table_name} VALUES ({', '.join(
+                        [ "'"+val.replace("'","''")+"'" if isinstance(val, str) else str(val).replace('None', 'NULL')
+                        for val in row]
+                        )});\n"
+                    export_sql += insert_row
+                export_sql += "\n"
+    
             with open(filename, 'w') as f:
-                for table in tables:
-                    table_name = table[0]
-
-                    # Obtener el esquema de la tabla
-                    cursor.execute(f"SELECT column_name, data_type, character_maximum_length FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = '{table_name}'")
-                    columns = cursor.fetchall()
-                    create_table = f"CREATE TABLE {table_name} (\n"
-                    create_table += ",\n".join([f"{col[0]} {col[1]}{f'({col[2]})' if col[2] else ''}" for col in columns])
-                    create_table += "\n);\n\n"
-                    f.write(create_table)
-
-                    # Obtener los datos de la tabla
-                    cursor.execute(f"SELECT * FROM {table_name}")
-                    rows = cursor.fetchall()
-                    for row in rows:
-                        insert_row = f"INSERT INTO {table_name} VALUES ({', '.join([repr(val) for val in row])});\n"
-                        f.write(insert_row)
-                    f.write("\n")
+                f.write(export_sql)
             
             cursor.close()
             self.close_connection()
