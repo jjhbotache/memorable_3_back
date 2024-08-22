@@ -132,12 +132,21 @@ def set_design(design: Design, list_of_tags_ids: list[int]):
     # Confirmar los cambios
     db.get_connection().commit()
 
+    # Obtener el último id de la tabla tag_design
+    cursor.execute("SELECT MAX(id) AS max_id FROM tag_design")
+    max_id = cursor.fetchone()[0]
+    
+    # Obtener el id a utilizar sumando 1 al último id
+    id_to_use = max_id + 1
+    print(id_to_use)
+    
     # Insertar en la tabla tag_design
     for tag_id in list_of_tags_ids:
         cursor.execute(
-            "INSERT INTO tag_design (id_tag, id_design) VALUES (%s, %s)",
-            (tag_id, design.id_design)
+            "INSERT INTO tag_design (id, id_tag, id_design) VALUES (%s, %s, %s)",
+            (id_to_use, tag_id, design.id_design)
         )
+        id_to_use += 1
 
     # Confirmar los cambios
     db.get_connection().commit()
