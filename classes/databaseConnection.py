@@ -70,8 +70,15 @@ class DatabaseConnection:
         return self._connection_holder.connection
 
     def get_cursor(self):
-        connection = self.get_connection()
-        return connection.cursor()
+        try:
+            connection = self.get_connection()
+            return connection.cursor()
+        except Exception as e:
+            print(f"Error al obtener el cursor: {e}")
+            # retry
+            self.close_connection()
+            return self.get_cursor()
+        
     
     def close_connection(self):
         if hasattr(self._connection_holder, "connection"):
