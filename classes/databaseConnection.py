@@ -10,51 +10,55 @@ class DatabaseConnection:
     _connection_holder = threading.local()
     
     create_tables_sql = """
-            CREATE TABLE IF NOT EXISTS users (
-                google_sub TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                email TEXT NOT NULL,
-                phone TEXT,
-                img_url TEXT
-            );
-            CREATE TABLE IF NOT EXISTS designs (
-                id SERIAL PRIMARY KEY,
-                name TEXT NOT NULL,
-                img_url TEXT,
-                ai_url TEXT
-            );
-            CREATE TABLE IF NOT EXISTS tags (
-                id SERIAL PRIMARY KEY,
-                name TEXT NOT NULL
-            );
-            CREATE TABLE IF NOT EXISTS cart_design (
-                id SERIAL PRIMARY KEY,
-                id_user TEXT,
-                id_designs INTEGER,
-                FOREIGN KEY (id_user) REFERENCES users(google_sub) ON DELETE CASCADE,
-                FOREIGN KEY (id_designs) REFERENCES designs(id) ON DELETE CASCADE
-            );
-            ALTER TABLE cart_design
-            ADD CONSTRAINT fk_cart_design_users
-            FOREIGN KEY (id_user) REFERENCES users(google_sub) ON DELETE CASCADE;
-            CREATE TABLE IF NOT EXISTS favorite_list_design (
-                id SERIAL PRIMARY KEY,
-                id_user TEXT,
-                id_designs INTEGER,
-                FOREIGN KEY (id_user) REFERENCES users(google_sub) ON DELETE CASCADE,
-                FOREIGN KEY (id_designs) REFERENCES designs(id) ON DELETE CASCADE
-            );
-            CREATE TABLE IF NOT EXISTS tag_design (
-                id SERIAL PRIMARY KEY,
-                id_tag INTEGER,
-                id_design INTEGER,
-                FOREIGN KEY (id_tag) REFERENCES tags(id) ON DELETE CASCADE,
-                FOREIGN KEY (id_design) REFERENCES designs(id) ON DELETE CASCADE
-            );
-            CREATE TABLE IF NOT EXISTS extra_info (
-                name TEXT NOT NULL,
-                value TEXT
-            );
+CREATE TABLE IF NOT EXISTS users (
+    google_sub TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    phone TEXT,
+    img_url TEXT
+);
+
+CREATE TABLE IF NOT EXISTS designs (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    img_url TEXT,
+    ai_url TEXT
+);
+
+CREATE TABLE IF NOT EXISTS tags (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS cart_design (
+    id SERIAL PRIMARY KEY,
+    id_user TEXT,
+    id_designs INTEGER,
+    FOREIGN KEY (id_user) REFERENCES users(google_sub) ON DELETE CASCADE,
+    FOREIGN KEY (id_designs) REFERENCES designs(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS favorite_list_design (
+    id SERIAL PRIMARY KEY,
+    id_user TEXT,
+    id_designs INTEGER,
+    FOREIGN KEY (id_user) REFERENCES users(google_sub) ON DELETE CASCADE,
+    FOREIGN KEY (id_designs) REFERENCES designs(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS tag_design (
+    id SERIAL PRIMARY KEY,
+    id_tag INTEGER,
+    id_design INTEGER,
+    FOREIGN KEY (id_tag) REFERENCES tags(id) ON DELETE CASCADE,
+    FOREIGN KEY (id_design) REFERENCES designs(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS extra_info (
+    name TEXT NOT NULL,
+    value TEXT
+);
+
         """
 
 
