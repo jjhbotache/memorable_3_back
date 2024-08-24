@@ -1,3 +1,5 @@
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning)
 from fastapi import FastAPI, File, Form,responses,Request,UploadFile
 from AI.ai_search import search_designs_with_ai
 from classes.design import Design
