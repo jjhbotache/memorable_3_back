@@ -233,10 +233,16 @@ def update_design(design: Design, list_of_tags_ids: list[int]):
     )
     db.get_connection().commit()
     
+    # print all the rows on the table tag_design
     for tag_id in list_of_tags_ids:
+        cursor.execute("SELECT id FROM tag_design ORDER BY id DESC LIMIT 1")
+        last_row_id = cursor.fetchone()[0]
+        new_id = last_row_id + 1
+        
+        
         cursor.execute(
-            "INSERT INTO tag_design (id_tag, id_design) VALUES (%s, %s)",
-            (tag_id, design.id_design)
+            "INSERT INTO tag_design (id, id_tag, id_design) VALUES (%s, %s, %s)",
+            (new_id,tag_id, design.id_design)
         )
     db.get_connection().commit()
     db.close_connection()
