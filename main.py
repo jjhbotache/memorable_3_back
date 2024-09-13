@@ -23,6 +23,8 @@ from fastapi.responses import FileResponse
 
 from whatsapp_bot.token_crud import create_token, delete_token, read_token, update_token
 from whatsapp_bot.whatsapp_bot_functions import confirm_buyment, send_whats_img, send_whats_msg
+from typing import List, Dict
+
 
 app = FastAPI()
 app.add_middleware(
@@ -121,6 +123,12 @@ def update_tag(tag:Tag,request:Request):
 def delete_tag(tag:Tag,request:Request):
     db.delete_tag(tag)
     return responses.JSONResponse(content={"status":"ok"})  
+
+@app.put("/tags/update-order")
+# @admin_only
+def update_tags_order(tags_order: Dict[str, int], request: Request):
+    db.update_tags_order(tags_order)
+    return responses.JSONResponse(content={"status": "ok"})
 
 # designs
 @app.get("/designs")

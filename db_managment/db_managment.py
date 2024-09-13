@@ -1,3 +1,6 @@
+from typing import Dict
+import psycopg2.extras
+
 from classes.user import User
 from classes.databaseConnection import DatabaseConnection
 from classes.design import Design
@@ -106,6 +109,24 @@ def get_tags_by_design_id(id_design: int):
     db.close_connection()
     return tags
 
+
+
+def update_tags_order(tags_order: Dict[str, int]):
+    db = DatabaseConnection()
+    cursor = db.get_cursor()
+    
+    update_query = """
+    UPDATE tags
+    SET "order" = data.order
+    FROM (VALUES %s) AS data(id, "order")
+    WHERE tags.id = data.id
+    """
+    
+    values = [(int(tag_id), order) for tag_id, order in tags_order.items()]
+    psycopg2.extras.execute_values(cursor, update_query, values, template=None, page_size=100)
+    
+    db.get_connection().commit()
+    db.close_connection()
 
 # designs
 def set_design(design: Design, list_of_tags_ids: list[int]):
