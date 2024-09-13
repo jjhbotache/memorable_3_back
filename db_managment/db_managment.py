@@ -194,16 +194,40 @@ def get_designs(google_sub: str = None):
 def get_design_by_id(id_design: int, google_sub: str = None):
     db = DatabaseConnection()
     cursor = db.get_cursor()
-    cursor.execute(
-        "SELECT * FROM designs WHERE id = %s",
-        (id_design,)
-    )
+    
+    query = """
+    SELECT 
+        d.*,
+        COALESCE(json_agg(DISTINCT jsonb_build_object('id', t.id, 'name', t.name)) FILTER (WHERE t.id IS NOT NULL), '[]') AS tags,
+        CASE 
+            WHEN %(google_sub)s IS NOT NULL THEN 
+                COALESCE(bool_or(f.id IS NOT NULL), FALSE)
+            ELSE FALSE
+        END AS loved,
+        CASE 
+            WHEN %(google_sub)s IS NOT NULL THEN 
+                COALESCE(bool_or(c.id IS NOT NULL), FALSE)
+            ELSE FALSE
+        END AS addedToCart
+    FROM 
+        designs d
+    LEFT JOIN 
+        tag_design dt ON d.id = dt.id_design
+    LEFT JOIN 
+        tags t ON dt.id_tag = t.id
+    LEFT JOIN 
+        favorite_list_design f ON d.id = f.id_designs AND f.id_user = %(google_sub)s
+    LEFT JOIN 
+        cart_design c ON d.id = c.id_designs AND c.id_user = %(google_sub)s
+    WHERE
+        d.id = %(id_design)s
+    GROUP BY 
+        d.id
+    """
+    
+    cursor.execute(query, {'id_design': id_design, 'google_sub': google_sub})
     design = cursor.fetchone()
     design_dict = dict(zip([column[0] for column in cursor.description], design))
-    design_dict["tags"] = get_tags_by_design_id(id_design)
-    
-    if google_sub is not None:
-        pass
     
     db.close_connection()
     return design_dict
