@@ -125,8 +125,10 @@ def delete_tag(tag:Tag,request:Request):
     return responses.JSONResponse(content={"status":"ok"})  
 
 @app.put("/tags/update-order")
-# @admin_only
+@admin_only
 def update_tags_order(tags_order: Dict[str, int], request: Request):
+    print("tags_order: ",tags_order)
+    
     db.update_tags_order(tags_order)
     return responses.JSONResponse(content={"status": "ok"})
 

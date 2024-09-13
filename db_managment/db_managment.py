@@ -109,11 +109,12 @@ def get_tags_by_design_id(id_design: int):
     db.close_connection()
     return tags
 
-
-
 def update_tags_order(tags_order: Dict[str, int]):
     db = DatabaseConnection()
     cursor = db.get_cursor()
+    
+    # Set all tags' order to NULL
+    cursor.execute('UPDATE tags SET "order" = NULL')
     
     update_query = """
     UPDATE tags
